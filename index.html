@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票投資組合管理系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .sync-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .sync-status.online {
+            background: rgba(40, 167, 69, 0.8);
+        }
+
+        .sync-status.offline {
+            background: rgba(220, 53, 69, 0.8);
+        }
+
+        .auth-section {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .auth-section.hidden {
+            display: none;
+        }
+
+        .auth-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .auth-form input {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .auth-form button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom-color: #4facfe;
+            color: #4facfe;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .content {
+            display: none;
+            padding: 30px;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+
+        .btn-exchange {
+            background: linear-gradient(135deg, #ffa726 0%, #ff7043 100%);
+        }
+
+        .btn-sync {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 10px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .profit {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .loss {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .fee-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .fee-info h4 {
+            color: #0066cc;
+            margin-bottom: 10px;
+        }
+
+        .fee-info p {
+            margin: 5px 0;
+            color: #495057;
+        }
+
+        .market-indicator {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .market-tw {
+            background: #28a745;
+        }
+
+        .market-us {
+            background: #007bff;
+        }
+
+        .exchange-card {
+            background: linear-gradient(135deg, #ffa726 0%, #ff7043 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(255, 167, 38, 0.3);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #28a745;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px 5px;
+            }
+
+            .tab {
+                font-size: 12px;
+                padding: 12px 8px;
+            }
+
+            .sync-status {
+                position: static;
+                display: inline-block;
+                margin-top: 10px;
+            }
+
+            .auth-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .auth-form input,
+            .auth-form button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="sync-status" id="syncStatus">
+                <span class="loading" id="loadingSpinner" style="display: none;"></span>
+                <span id="statusText">離線模式</span>
+            </div>
+            <h1>📈 股票投資組合管理系統</h1>
+            <p>完整管理台股、美股買賣紀錄與績效分析 + 雲端同步</p>
+            
+            <div class="auth-section" id="authSection">
+                <div class="auth-form">
+                    <input type="email" id="userEmail" placeholder="電子郵件">
+                    <input type="password" id="userPassword" placeholder="密碼">
+                    <button onclick="signIn()">登入</button>
+                    <button onclick="signUp()">註冊</button>
+                    <button onclick="signOut()" id="signOutBtn" style="display: none;">登出</button>
+                </div>
+                <p style="font-size: 12px; margin-top: 10px; opacity: 0.8;">
+                    註冊帳號即可在不同設備間同步資料
+                </p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('transaction')">交易紀錄</button>
+            <button class="tab" onclick="switchTab('exchange')">換匯紀錄</button>
+            <button class="tab" onclick="switchTab('portfolio')">持倉明細</button>
+            <button class="tab" onclick="switchTab('analysis')">績效分析</button>
+            <button class="tab" onclick="switchTab('settings')">費率設定</button>
+            <button class="tab" onclick="switchTab('export')">匯出功能</button>
+        </div>
+
+        <!-- 交易紀錄頁面 -->
+        <div id="transaction" class="content active">
+            <div class="fee-info">
+                <h4>💡 手續費自動計算說明</h4>
+                <p><strong>台股：</strong>手續費 0.1425%，整股最低20元，零股最低1元 | 交易稅：賣出時收取 0.3%</p>
+                <p><strong>美股：</strong>依券商設定計算，可在「費率設定」中調整</p>
+                <button class="btn btn-sync" onclick="syncData()" id="syncBtn" disabled>
+                    <span id="syncBtnText">🔄 同步資料</span>
+                </button>
+            </div>
+
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #495057;">📝 新增交易紀錄</h3>
+                <form id="transactionForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>日期</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>市場</label>
+                            <select id="market" required>
+                                <option value="">選擇市場</option>
+                                <option value="TW">台股 🇹🇼</option>
+                                <option value="US">美股 🇺🇸</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>股票代號</label>
+                            <input type="text" id="symbol" placeholder="例: 2330, AAPL" required>
+                        </div>
+                        <div class="form-group">
+                            <label>股票名稱</label>
+                            <input type="text" id="name" placeholder="例: 台積電, Apple Inc." required>
+                        </div>
+                        <div class="form-group">
+                            <label>交易類型</label>
+                            <select id="type" required>
+                                <option value="">選擇類型</option>
+                                <option value="買進">買進</option>
+                                <option value="賣出">賣出</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>數量</label>
+                            <input type="number" id="quantity" placeholder="股數" required>
+                        </div>
+                        <div class="form-group">
+                            <label>價格</label>
+                            <input type="number" id="price" step="0.01" placeholder="每股價格" required>
+                        </div>
+                        <div class="form-group">
+                            <label>是否為零股 (台股)</label>
+                            <select id="oddLot">
+                                <option value="false">整股交易</option>
+                                <option value="true">零股交易</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>手續費</label>
+                            <input type="number" id="fee" step="0.01" placeholder="自動計算" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>交易稅</label>
+                            <input type="number" id="tax" step="0.01" placeholder="自動計算" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>備註</label>
+                            <input type="text" id="note" placeholder="選填">
+                        </div>
+                    </div>
+                    <button type="button" onclick="calculateFees()" class="btn" style="background: #6c757d;">🧮 重新計算費用</button>
+                    <button type="submit" class="btn">➕ 新增交易</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>市場</th>
+                            <th>代號</th>
+                            <th>名稱</th>
+                            <th>類型</th>
+                            <th>數量</th>
+                            <th>價格</th>
+                            <th>零股</th>
+                            <th>手續費</th>
+                            <th>交易稅</th>
+                            <th>總金額</th>
+                            <th>備註</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTable">
+                        <!-- 交易紀錄將顯示在這裡 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 換匯紀錄頁面 -->
+        <div id="exchange" class="content">
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #495057;">💱 新增換匯紀錄</h3>
+                <form id="exchangeForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>日期</label>
+                            <input type="date" id="exchangeDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>兌換類型</label>
+                            <select id="exchangeType" required>
+                                <option value="">選擇兌換</option>
+                                <option value="TWD-USD">台幣 → 美元</option>
+                                <option value="USD-TWD">美元 → 台幣</option>
+                                <option value="TWD-CNY">台幣 → 人民幣</option>
+                                <option value="CNY-TWD">人民幣 → 台幣</option>
+                                <option value="USD-CNY">美元 → 人民幣</option>
+                                <option value="CNY-USD">人民幣 → 美元</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>兌出金額</label>
+                            <input type="number" id="fromAmount" step="0.01" placeholder="兌出金額" required>
+                        </div>
+                        <div class="form-group">
+                            <label>匯率</label>
+                            <input type="number" id="exchangeRate" step="0.0001" placeholder="匯率" required>
+                        </div>
+                        <div class="form-group">
+                            <label>兌入金額</label>
+                            <input type="number" id="toAmount" step="0.01" placeholder="自動計算" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>手續費</label>
+                            <input type="number" id="exchangeFee" step="0.01" placeholder="換匯手續費" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>銀行/券商</label>
+                            <input type="text" id="exchangeBank" placeholder="例: 台銀, 富邦">
+                        </div>
+                        <div class="form-group">
+                            <label>備註</label>
+                            <input type="text" id="exchangeNote" placeholder="選填">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-exchange">💱 新增換匯紀錄</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>兌換類型</th>
+                            <th>兌出金額</th>
+                            <th>匯率</th>
+                            <th>兌入金額</th>
+                            <th>手續費</th>
+                            <th>銀行/券商</th>
+                            <th>備註</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exchangeTable">
+                        <!-- 換匯紀錄將顯示在這裡 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 持倉明細頁面 -->
+        <div id="portfolio" class="content">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>市場</th>
+                            <th>代號</th>
+                            <th>名稱</th>
+                            <th>持有股數</th>
+                            <th>平均成本</th>
+                            <th>總成本</th>
+                            <th>現價</th>
+                            <th>市值</th>
+                            <th>未實現損益</th>
+                            <th>報酬率(%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolioTable">
+                        <!-- 持倉明細將顯示在這裡 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 績效分析頁面 -->
+        <div id="analysis" class="content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalInvestment">$0</div>
+                    <div class="stat-label">總投入金額</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalValue">$0</div>
+                    <div class="stat-label">總市值</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalProfit">$0</div>
+                    <div class="stat-label">總損益</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalReturn">0%</div>
+                    <div class="stat-label">總報酬率</div>
+                </div>
+                <div class="exchange-card">
+                    <div class="stat-value" id="totalExchangeFee">$0</div>
+                    <div class="stat-label">總換匯費用</div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #495057;">📊 市場分布</h3>
+                <div id="marketDistribution"></div>
+            </div>
+        </div>
+
+        <!-- 費率設定頁面 -->
+        <div id="settings" class="content">
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #495057;">⚙️ 交易費率設定</h3>
+                
+                <h4 style="color: #28a745; margin-bottom: 15px;">🇹🇼 台股費率設定</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>手續費率 (%)</label>
+                        <input type="number" id="twFeeRate" step="0.0001" value="0.1425">
+                    </div>
+                    <div class="form-group">
+                        <label>整股最低手續費 (元)</label>
+                        <input type="number" id="twMinFee" value="20">
+                    </div>
+                    <div class="form-group">
+                        <label>零股最低手續費 (元)</label>
+                        <input type="number" id="twOddLotMinFee" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>交易稅率 (%) - 賣出時</label>
+                        <input type="number" id="twTaxRate" step="0.001" value="0.3">
+                    </div>
+                </div>
+
+                <h4 style="color: #007bff; margin: 30px 0 15px 0;">🇺🇸 美股費率設定</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>手續費類型</label>
+                        <select id="usFeeType">
+                            <option value="fixed">固定費用</option>
+                            <option value="percentage">百分比費用</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>固定手續費 (USD)</label>
+                        <input type="number" id="usFixedFee" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>百分比費率 (%)</label>
+                        <input type="number" id="usFeeRate" step="0.0001" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>最低手續費 (USD)</label>
+                        <input type="number" id="usMinFee" step="0.01" value="0">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="saveFeeSettings()">💾 儲存設定</button>
+                <button class="btn" onclick="resetFeeSettings()" style="background: #6c757d;">🔄 重置為預設</button>
+            </div>
+        </div>
+
+        <!-- 匯出功能頁面 -->
+        <div id="export" class="content">
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #495057;">📤 資料匯出</h3>
+                <div style="text-align: center;">
+                    <button class="btn" onclick="exportToCSV('transactions')">匯出交易紀錄 CSV</button>
+                    <button class="btn btn-exchange" onclick="exportToCSV('exchange')">匯出換匯紀錄 CSV</button>
+                    <button class="btn" onclick="exportToCSV('portfolio')">匯出持倉明細 CSV</button>
+                    <button class="btn" onclick="exportAllData()">匯出完整資料</button>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #495057;">🗂️ 資料管理</h3>
+                <div style="text-align: center;">
+                    <input type="file" id="importFile" accept=".json,.csv" style="margin: 10px;">
+                    <br>
+                    <button class="btn" onclick="importData()">匯入資料</button>
+                    <button class="btn btn-danger" onclick="clearAllData()">清空所有資料</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+		const firebaseConfig = {
+			apiKey: "AIzaSyAFxgqpcgcA2LYL6OkoAmKobHTeqDFCRUY",
+			authDomain: "stock-portfolio-app-d069f.firebaseapp.com",
+			databaseURL: "https://stock-portfolio-app-d069f-default-rtdb.asia-southeast1.firebasedatabase.app",
+			projectId: "stock-portfolio-app-d069f",
+			storageBucket: "stock-portfolio-app-d069f.firebasestorage.app",
+			messagingSenderId: "22049816403",
+			appId: "1:22049816403:web:1d1023c91e855f20daeba6",
+			measurementId: "G-2T6QWCPE2J"
+		};
+
+        // 檢查 Firebase 配置是否已設定
+        const isFirebaseConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
+        
+        if (isFirebaseConfigured) {
+            // 動態載入 Firebase SDK
+            import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js').then(({ initializeApp }) => {
+                return Promise.all([
+                    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'),
+                    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js')
+                ]).then(([{ getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged }, { getDatabase, ref, set, get, onValue }]) => {
+                    // 初始化 Firebase
+                    const app = initializeApp(firebaseConfig);
+                    const auth = getAuth(app);
+                    const database = getDatabase(app);
+                    
+                    window.firebase = { auth, database, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, ref, set, get, onValue };
+                    initializeFirebase();
+                });
+            }).catch(() => {
+                console.log('Firebase SDK 載入失敗，使用離線模式');
+                initializeApp();
+            });
+        } else {
+            console.log('Firebase 未配置，使用離線模式');
+            initializeApp();
+        }
+
+        function initializeFirebase() {
+            // 監聽身份驗證狀態
+            window.firebase.onAuthStateChanged(window.firebase.auth, (user) => {
+                if (user) {
+                    updateSyncStatus('已登入: ' + user.email, true);
+                    document.getElementById('authSection').classList.add('hidden');
+                    document.getElementById('signOutBtn').style.display = 'inline-block';
+                    document.getElementById('syncBtn').disabled = false;
+                    
+                    // 自動載入用戶資料
+                    loadUserData();
+                } else {
+                    updateSyncStatus('離線模式', false);
+                    document.getElementById('authSection').classList.remove('hidden');
+                    document.getElementById('signOutBtn').style.display = 'none';
+                    document.getElementById('syncBtn').disabled = true;
+                }
+            });
+            
+            initializeApp();
+        }
+
+        function initializeApp() {
+            // 初始化應用程式
+            loadLocalData();
+            updateTransactionTable();
+            updateExchangeTable();
+            updatePortfolio();
+            loadFeeSettings();
+            setDefaultDates();
+        }
+    </script>
+
+    <script>
+        // 全域變數
+        let transactions = [];
+        let exchanges = [];
+        let feeSettings = {
+            tw: {
+                feeRate: 0.1425,
+                minFee: 20,
+                oddLotMinFee: 1,
+                taxRate: 0.3
+            },
+            us: {
+                feeType: 'fixed',
+                fixedFee: 0,
+                feeRate: 0,
+                minFee: 0
+            }
+        };
+        let currentPrices = {};
+        let currentUser = null;
+
+        // Firebase 認證功能
+        async function signUp() {
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            
+            if (!email || !password) {
+                showNotification('請輸入電子郵件和密碼', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                await window.firebase.createUserWithEmailAndPassword(window.firebase.auth, email, password);
+                showNotification('註冊成功！', 'success');
+                document.getElementById('userEmail').value = '';
+                document.getElementById('userPassword').value = '';
+            } catch (error) {
+                showNotification('註冊失敗: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function signIn() {
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            
+            if (!email || !password) {
+                showNotification('請輸入電子郵件和密碼', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                await window.firebase.signInWithEmailAndPassword(window.firebase.auth, email, password);
+                showNotification('登入成功！', 'success');
+                document.getElementById('userEmail').value = '';
+                document.getElementById('userPassword').value = '';
+            } catch (error) {
+                showNotification('登入失敗: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function signOut() {
+            try {
+                await window.firebase.signOut(window.firebase.auth);
+                showNotification('已登出', 'success');
+            } catch (error) {
+                showNotification('登出失敗: ' + error.message, 'error');
+            }
+        }
+
+        // 資料同步功能
+        async function syncData() {
+            if (!window.firebase || !window.firebase.auth.currentUser) {
+                showNotification('請先登入', 'error');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                const userId = window.firebase.auth.currentUser.uid;
+                const userDataRef = window.firebase.ref(window.firebase.database, `users/${userId}`);
+                
+                const userData = {
+                    transactions: transactions,
+                    exchanges: exchanges,
+                    feeSettings: feeSettings,
+                    lastSync: new Date().toISOString()
+                };
+                
+                await window.firebase.set(userDataRef, userData);
+                showNotification('資料同步成功！', 'success');
+            } catch (error) {
+                showNotification('同步失敗: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadUserData() {
+            if (!window.firebase || !window.firebase.auth.currentUser) return;
+
+            try {
+                showLoading(true);
+                const userId = window.firebase.auth.currentUser.uid;
+                const userDataRef = window.firebase.ref(window.firebase.database, `users/${userId}`);
+                const snapshot = await window.firebase.get(userDataRef);
+                
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    transactions = userData.transactions || [];
+                    exchanges = userData.exchanges || [];
+                    feeSettings = userData.feeSettings || feeSettings;
+                    
+                    // 更新所有顯示
+                    updateTransactionTable();
+                    updateExchangeTable();
+                    updatePortfolio();
+                    loadFeeSettings();
+                    
+                    showNotification('資料載入成功', 'success');
+                }
+            } catch (error) {
+                showNotification('載入資料失敗: ' + error.message, 'error');
+                // 如果雲端載入失敗，則載入本地資料
+                loadLocalData();
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 本地資料管理
+        function loadLocalData() {
+            try {
+                transactions = JSON.parse(localStorage.getItem('stockTransactions') || '[]');
+                exchanges = JSON.parse(localStorage.getItem('exchangeRecords') || '[]');
+                const savedSettings = localStorage.getItem('feeSettings');
+                if (savedSettings) {
+                    feeSettings = JSON.parse(savedSettings);
+                }
+            } catch (error) {
+                console.error('載入本地資料失敗:', error);
+                transactions = [];
+                exchanges = [];
+            }
+        }
+
+        function saveLocalData() {
+            try {
+                localStorage.setItem('stockTransactions', JSON.stringify(transactions));
+                localStorage.setItem('exchangeRecords', JSON.stringify(exchanges));
+                localStorage.setItem('feeSettings', JSON.stringify(feeSettings));
+            } catch (error) {
+                console.error('儲存本地資料失敗:', error);
+            }
+        }
+
+        // UI 輔助功能
+        function updateSyncStatus(text, isOnline) {
+            const statusElement = document.getElementById('syncStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusText.textContent = text;
+            statusElement.className = `sync-status ${isOnline ? 'online' : 'offline'}`;
+        }
+
+        function showLoading(show) {
+            const spinner = document.getElementById('loadingSpinner');
+            const syncBtn = document.getElementById('syncBtnText');
+            
+            if (show) {
+                spinner.style.display = 'inline-block';
+                syncBtn.textContent = '同步中...';
+            } else {
+                spinner.style.display = 'none';
+                syncBtn.textContent = '🔄 同步資料';
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        // 頁面切換
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'portfolio') updatePortfolio();
+            if (tabName === 'analysis') updateAnalysis();
+            if (tabName === 'exchange') updateExchangeTable();
+            if (tabName === 'settings') loadFeeSettings();
+        }
+
+        // 設定預設日期
+        function setDefaultDates() {
+            document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('exchangeDate').valueAsDate = new Date();
+        }
+
+        // 交易表單處理
+        document.getElementById('transactionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const transaction = {
+                id: Date.now(),
+                date: document.getElementById('date').value,
+                market: document.getElementById('market').value,
+                symbol: document.getElementById('symbol').value.toUpperCase(),
+                name: document.getElementById('name').value,
+                type: document.getElementById('type').value,
+                quantity: parseFloat(document.getElementById('quantity').value),
+                price: parseFloat(document.getElementById('price').value),
+                isOddLot: document.getElementById('oddLot').value === 'true',
+                fee: parseFloat(document.getElementById('fee').value) || 0,
+                tax: parseFloat(document.getElementById('tax').value) || 0,
+                note: document.getElementById('note').value
+            };
+            
+            // 計算總金額
+            if (transaction.type === '買進') {
+                transaction.totalAmount = (transaction.quantity * transaction.price) + transaction.fee + transaction.tax;
+            } else {
+                transaction.totalAmount = (transaction.quantity * transaction.price) - transaction.fee - transaction.tax;
+            }
+            
+            transactions.push(transaction);
+            saveLocalData();
+            updateTransactionTable();
+            this.reset();
+            setDefaultDates();
+            document.getElementById('oddLot').value = 'false';
+            
+            showNotification('交易紀錄已新增成功！', 'success');
+        });
+
+        // 換匯表單處理
+        document.getElementById('exchangeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const exchange = {
+                id: Date.now(),
+                date: document.getElementById('exchangeDate').value,
+                type: document.getElementById('exchangeType').value,
+                fromAmount: parseFloat(document.getElementById('fromAmount').value),
+                rate: parseFloat(document.getElementById('exchangeRate').value),
+                toAmount: parseFloat(document.getElementById('toAmount').value),
+                fee: parseFloat(document.getElementById('exchangeFee').value) || 0,
+                bank: document.getElementById('exchangeBank').value,
+                note: document.getElementById('exchangeNote').value
+            };
+            
+            exchanges.push(exchange);
+            saveLocalData();
+            updateExchangeTable();
+            this.reset();
+            setDefaultDates();
+            
+            showNotification('換匯紀錄已新增成功！', 'success');
+        });
+
+        // 計算換匯兌入金額
+        function calculateExchangeAmount() {
+            const fromAmount = parseFloat(document.getElementById('fromAmount').value) || 0;
+            const rate = parseFloat(document.getElementById('exchangeRate').value) || 0;
+            
+            if (fromAmount && rate) {
+                const toAmount = fromAmount * rate;
+                document.getElementById('toAmount').value = toAmount.toFixed(4);
+            }
+        }
+
+        // 更新交易紀錄表格
+        function updateTransactionTable() {
+            const tbody = document.getElementById('transactionTable');
+            tbody.innerHTML = '';
+            
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedTransactions.forEach(transaction => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${transaction.date}</td>
+                    <td><span class="market-indicator market-${transaction.market.toLowerCase()}">${transaction.market}</span></td>
+                    <td>${transaction.symbol}</td>
+                    <td>${transaction.name}</td>
+                    <td><span style="color: ${transaction.type === '買進' ? '#28a745' : '#dc3545'}">${transaction.type}</span></td>
+                    <td>${transaction.quantity.toLocaleString()}</td>
+                    <td>${transaction.price.toFixed(2)}</td>
+                    <td>${transaction.isOddLot ? '✓' : '✗'}</td>
+                    <td>${transaction.fee.toFixed(2)}</td>
+                    <td>${transaction.tax.toFixed(2)}</td>
+                    <td>${transaction.totalAmount.toFixed(2)}</td>
+                    <td>${transaction.note || '-'}</td>
+                    <td><button class="delete-btn" onclick="deleteTransaction(${transaction.id})">刪除</button></td>
+                `;
+            });
+        }
+
+        // 更新換匯紀錄表格
+        function updateExchangeTable() {
+            const tbody = document.getElementById('exchangeTable');
+            tbody.innerHTML = '';
+            
+            const sortedExchanges = [...exchanges].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedExchanges.forEach(exchange => {
+                const [fromCurrency, toCurrency] = exchange.type.split('-');
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${exchange.date}</td>
+                    <td>${fromCurrency} → ${toCurrency}</td>
+                    <td>${exchange.fromAmount.toLocaleString()} ${fromCurrency}</td>
+                    <td>${exchange.rate.toFixed(4)}</td>
+                    <td>${exchange.toAmount.toLocaleString()} ${toCurrency}</td>
+                    <td>${exchange.fee.toFixed(2)}</td>
+                    <td>${exchange.bank || '-'}</td>
+                    <td>${exchange.note || '-'}</td>
+                    <td><button class="delete-btn" onclick="deleteExchange(${exchange.id})">刪除</button></td>
+                `;
+            });
+        }
+
+        // 刪除功能
+        function deleteTransaction(id) {
+            if (confirm('確定要刪除此交易紀錄嗎？')) {
+                transactions = transactions.filter(t => t.id !== id);
+                saveLocalData();
+                updateTransactionTable();
+                updatePortfolio();
+                showNotification('交易紀錄已刪除', 'success');
+            }
+        }
+
+        function deleteExchange(id) {
+            if (confirm('確定要刪除此換匯紀錄嗎？')) {
+                exchanges = exchanges.filter(e => e.id !== id);
+                saveLocalData();
+                updateExchangeTable();
+                updateAnalysis();
+                showNotification('換匯紀錄已刪除', 'success');
+            }
+        }
+
+        // 計算手續費和交易稅
+        function calculateFees() {
+            const market = document.getElementById('market').value;
+            const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const type = document.getElementById('type').value;
+            const isOddLot = document.getElementById('oddLot').value === 'true';
+            
+            if (!market || !quantity || !price) {
+                document.getElementById('fee').value = '';
+                document.getElementById('tax').value = '';
+                return;
+            }
+            
+            const totalAmount = quantity * price;
+            let fee = 0;
+            let tax = 0;
+            
+            if (market === 'TW') {
+                const feeRate = feeSettings.tw.feeRate / 100;
+                fee = totalAmount * feeRate;
+                const minFee = isOddLot ? feeSettings.tw.oddLotMinFee : feeSettings.tw.minFee;
+                fee = Math.max(fee, minFee);
+                
+                if (type === '賣出') {
+                    tax = totalAmount * (feeSettings.tw.taxRate / 100);
+                }
+            } else if (market === 'US') {
+                if (feeSettings.us.feeType === 'fixed') {
+                    fee = feeSettings.us.fixedFee;
+                } else {
+                    fee = totalAmount * (feeSettings.us.feeRate / 100);
+                    fee = Math.max(fee, feeSettings.us.minFee);
+                }
+            }
+            
+            document.getElementById('fee').value = fee.toFixed(2);
+            document.getElementById('tax').value = tax.toFixed(2);
+        }
+
+        // 更新持倉明細
+        function updatePortfolio() {
+            const portfolio = {};
+            
+            transactions.forEach(transaction => {
+                const key = `${transaction.market}-${transaction.symbol}`;
+                
+                if (!portfolio[key]) {
+                    portfolio[key] = {
+                        market: transaction.market,
+                        symbol: transaction.symbol,
+                        name: transaction.name,
+                        totalQuantity: 0,
+                        totalCost: 0,
+                        transactions: []
+                    };
+                }
+                
+                portfolio[key].transactions.push(transaction);
+                
+                if (transaction.type === '買進') {
+                    portfolio[key].totalQuantity += transaction.quantity;
+                    portfolio[key].totalCost += transaction.totalAmount;
+                } else {
+                    portfolio[key].totalQuantity -= transaction.quantity;
+                    if (portfolio[key].totalQuantity + transaction.quantity > 0) {
+                        const avgCost = portfolio[key].totalCost / (portfolio[key].totalQuantity + transaction.quantity);
+                        portfolio[key].totalCost -= transaction.quantity * avgCost;
+                    }
+                }
+            });
+            
+            const tbody = document.getElementById('portfolioTable');
+            tbody.innerHTML = '';
+            
+            Object.values(portfolio).forEach(holding => {
+                if (holding.totalQuantity > 0) {
+                    const avgCost = holding.totalCost / holding.totalQuantity;
+                    const currentPrice = getCurrentPrice(holding.symbol, holding.market);
+                    const marketValue = holding.totalQuantity * currentPrice;
+                    const unrealizedPL = marketValue - holding.totalCost;
+                    const returnRate = (unrealizedPL / holding.totalCost) * 100;
+                    
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td><span class="market-indicator market-${holding.market.toLowerCase()}">${holding.market}</span></td>
+                        <td>${holding.symbol}</td>
+                        <td>${holding.name}</td>
+                        <td>${holding.totalQuantity.toLocaleString()}</td>
+                        <td>${avgCost.toFixed(2)}</td>
+                        <td>${holding.totalCost.toFixed(2)}</td>
+                        <td>${currentPrice.toFixed(2)}</td>
+                        <td>${marketValue.toFixed(2)}</td>
+                        <td class="${unrealizedPL >= 0 ? 'profit' : 'loss'}">${unrealizedPL.toFixed(2)}</td>
+                        <td class="${returnRate >= 0 ? 'profit' : 'loss'}">${returnRate.toFixed(2)}%</td>
+                    `;
+                }
+            });
+        }
+
+        // 獲取現價（模擬）
+        function getCurrentPrice(symbol, market) {
+            const key = `${market}-${symbol}`;
+            if (!currentPrices[key]) {
+                const lastTransaction = transactions
+                    .filter(t => t.symbol === symbol && t.market === market)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                
+                if (lastTransaction) {
+                    const basePrice = lastTransaction.price;
+                    const fluctuation = (Math.random() - 0.5) * 0.1;
+                    currentPrices[key] = basePrice * (1 + fluctuation);
+                } else {
+                    currentPrices[key] = 100;
+                }
+            }
+            return currentPrices[key];
+        }
+
+        // 更新績效分析
+        function updateAnalysis() {
+            let totalInvestment = 0;
+            let totalValue = 0;
+            let totalExchangeFee = 0;
+            
+            const portfolio = {};
+            transactions.forEach(transaction => {
+                const key = `${transaction.market}-${transaction.symbol}`;
+                
+                if (!portfolio[key]) {
+                    portfolio[key] = {
+                        totalQuantity: 0,
+                        totalCost: 0,
+                        name: transaction.name
+                    };
+                }
+                
+                if (transaction.type === '買進') {
+                    portfolio[key].totalQuantity += transaction.quantity;
+                    portfolio[key].totalCost += transaction.totalAmount;
+                } else {
+                    portfolio[key].totalQuantity -= transaction.quantity;
+                    if (portfolio[key].totalQuantity + transaction.quantity > 0) {
+                        const avgCost = portfolio[key].totalCost / (portfolio[key].totalQuantity + transaction.quantity);
+                        portfolio[key].totalCost -= transaction.quantity * avgCost;
+                    }
+                }
+            });
+            
+            Object.entries(portfolio).forEach(([key, holding]) => {
+                if (holding.totalQuantity > 0) {
+                    totalInvestment += holding.totalCost;
+                    const [market, symbol] = key.split('-');
+                    const currentPrice = getCurrentPrice(symbol, market);
+                    totalValue += holding.totalQuantity * currentPrice;
+                }
+            });
+            
+            exchanges.forEach(exchange => {
+                totalExchangeFee += exchange.fee;
+            });
+            
+            const totalProfit = totalValue - totalInvestment;
+            const totalReturn = totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0;
+            
+            document.getElementById('totalInvestment').textContent = `${totalInvestment.toFixed(2)}`;
+            document.getElementById('totalValue').textContent = `${totalValue.toFixed(2)}`;
+            document.getElementById('totalProfit').textContent = `${totalProfit.toFixed(2)}`;
+            document.getElementById('totalProfit').className = totalProfit >= 0 ? 'stat-value profit' : 'stat-value loss';
+            document.getElementById('totalReturn').textContent = `${totalReturn.toFixed(2)}%`;
+            document.getElementById('totalReturn').className = totalReturn >= 0 ? 'stat-value profit' : 'stat-value loss';
+            document.getElementById('totalExchangeFee').textContent = `${totalExchangeFee.toFixed(2)}`;
+        }
+
+        // 費率設定功能
+        function loadFeeSettings() {
+            document.getElementById('twFeeRate').value = feeSettings.tw.feeRate;
+            document.getElementById('twMinFee').value = feeSettings.tw.minFee;
+            document.getElementById('twOddLotMinFee').value = feeSettings.tw.oddLotMinFee;
+            document.getElementById('twTaxRate').value = feeSettings.tw.taxRate;
+            
+            document.getElementById('usFeeType').value = feeSettings.us.feeType;
+            document.getElementById('usFixedFee').value = feeSettings.us.fixedFee;
+            document.getElementById('usFeeRate').value = feeSettings.us.feeRate;
+            document.getElementById('usMinFee').value = feeSettings.us.minFee;
+        }
+
+        function saveFeeSettings() {
+            feeSettings.tw.feeRate = parseFloat(document.getElementById('twFeeRate').value);
+            feeSettings.tw.minFee = parseFloat(document.getElementById('twMinFee').value);
+            feeSettings.tw.oddLotMinFee = parseFloat(document.getElementById('twOddLotMinFee').value);
+            feeSettings.tw.taxRate = parseFloat(document.getElementById('twTaxRate').value);
+            
+            feeSettings.us.feeType = document.getElementById('usFeeType').value;
+            feeSettings.us.fixedFee = parseFloat(document.getElementById('usFixedFee').value);
+            feeSettings.us.feeRate = parseFloat(document.getElementById('usFeeRate').value);
+            feeSettings.us.minFee = parseFloat(document.getElementById('usMinFee').value);
+            
+            saveLocalData();
+            showNotification('費率設定已儲存！', 'success');
+        }
+
+        function resetFeeSettings() {
+            if (confirm('確定要重置為預設費率設定嗎？')) {
+                feeSettings = {
+                    tw: {
+                        feeRate: 0.1425,
+                        minFee: 20,
+                        oddLotMinFee: 1,
+                        taxRate: 0.3
+                    },
+                    us: {
+                        feeType: 'fixed',
+                        fixedFee: 0,
+                        feeRate: 0,
+                        minFee: 0
+                    }
+                };
+                saveLocalData();
+                loadFeeSettings();
+                showNotification('已重置為預設設定！', 'success');
+            }
+        }
+
+        // 匯出功能
+        function exportToCSV(type) {
+            let csvContent = '';
+            let filename = '';
+            
+            if (type === 'transactions') {
+                csvContent = 'Date,Market,Symbol,Name,Type,Quantity,Price,OddLot,Fee,Tax,Total Amount,Note\n';
+                transactions.forEach(t => {
+                    csvContent += `${t.date},${t.market},${t.symbol},"${t.name}",${t.type},${t.quantity},${t.price},${t.isOddLot ? 'Yes' : 'No'},${t.fee},${t.tax},${t.totalAmount},"${t.note}"\n`;
+                });
+                filename = 'stock_transactions.csv';
+            } else if (type === 'exchange') {
+                csvContent = 'Date,Exchange Type,From Amount,Rate,To Amount,Fee,Bank,Note\n';
+                exchanges.forEach(e => {
+                    csvContent += `${e.date},${e.type},${e.fromAmount},${e.rate},${e.toAmount},${e.fee},"${e.bank}","${e.note}"\n`;
+                });
+                filename = 'exchange_records.csv';
+            }
+            
+            downloadCSV(csvContent, filename);
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportAllData() {
+            const data = {
+                transactions: transactions,
+                exchanges: exchanges,
+                feeSettings: feeSettings,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'stock_portfolio_complete_backup.json';
+            link.click();
+        }
+
+        function clearAllData() {
+            if (confirm('確定要清空所有資料嗎？此操作無法復原！')) {
+                transactions = [];
+                exchanges = [];
+                currentPrices = {};
+                saveLocalData();
+                updateTransactionTable();
+                updateExchangeTable();
+                updatePortfolio();
+                showNotification('所有資料已清空！', 'success');
+            }
+        }
+
+        // 事件綁定
+        document.getElementById('fromAmount').addEventListener('input', calculateExchangeAmount);
+        document.getElementById('exchangeRate').addEventListener('input', calculateExchangeAmount);
+
+        ['market', 'quantity', 'price', 'type', 'oddLot'].forEach(id => {
+            document.getElementById(id).addEventListener('change', calculateFees);
+            document.getElementById(id).addEventListener('input', calculateFees);
+        });
+
+                document.getElementById('market').addEventListener('change', function() {
+            const market = this.value;
+            const oddLotGroup = document.getElementById('oddLot').parentElement;
+            
+            if (market === 'TW') {
+                oddLotGroup.style.display = 'flex';
+            } else {
+                oddLotGroup.style.display = 'none';
+                document.getElementById('oddLot').value = 'false';
+            }
+            
+            calculateFees();
+        });
+    </script>
+</body>
+</html>
+//作者zhangjy
