@@ -214,6 +214,12 @@
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
         }
 
+        .btn-sell {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            padding: 8px 15px;
+            font-size: 12px;
+        }
+
         .table-container {
             background: white;
             border-radius: 15px;
@@ -273,6 +279,15 @@
             border-radius: 15px;
             text-align: center;
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .capital-card {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(46, 204, 113, 0.3);
         }
 
         .stat-value {
@@ -383,6 +398,51 @@
             background: #dc3545;
         }
 
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modal-header h3 {
+            color: #495057;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -438,6 +498,12 @@
                 width: 100%;
                 margin: 5px 0;
             }
+
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -469,6 +535,7 @@
             <button class="tab active" onclick="switchTab('transaction')">交易紀錄</button>
             <button class="tab" onclick="switchTab('exchange')">換匯紀錄</button>
             <button class="tab" onclick="switchTab('portfolio')">持倉明細</button>
+            <button class="tab" onclick="switchTab('capital')">資本管理</button>
             <button class="tab" onclick="switchTab('analysis')">績效分析</button>
             <button class="tab" onclick="switchTab('settings')">費率設定</button>
             <button class="tab" onclick="switchTab('export')">匯出功能</button>
@@ -665,10 +732,77 @@
                             <th>市值</th>
                             <th>未實現損益</th>
                             <th>報酬率(%)</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody id="portfolioTable">
                         <!-- 持倉明細將顯示在這裡 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 資本管理頁面 -->
+        <div id="capital" class="content">
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #495057;">💰 資本管理</h3>
+                <form id="capitalForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>日期</label>
+                            <input type="date" id="capitalDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>類型</label>
+                            <select id="capitalType" required>
+                                <option value="">選擇類型</option>
+                                <option value="初始投入">初始投入</option>
+                                <option value="追加投入">追加投入</option>
+                                <option value="資金提取">資金提取</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>金額</label>
+                            <input type="number" id="capitalAmount" step="0.01" placeholder="投入/提取金額" required>
+                        </div>
+                        <div class="form-group">
+                            <label>備註</label>
+                            <input type="text" id="capitalNote" placeholder="選填">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">💰 新增資本紀錄</button>
+                </form>
+            </div>
+
+            <div class="stats-grid">
+                <div class="capital-card">
+                    <div class="stat-value" id="totalCapital">$0</div>
+                    <div class="stat-label">總投入資本</div>
+                </div>
+                <div class="capital-card">
+                    <div class="stat-value" id="availableCapital">$0</div>
+                    <div class="stat-label">可用資金</div>
+                </div>
+                <div class="capital-card">
+                    <div class="stat-value" id="investedCapital">$0</div>
+                    <div class="stat-label">已投資金額</div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>類型</th>
+                            <th>金額</th>
+                            <th>累計資本</th>
+                            <th>備註</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="capitalTable">
+                        <!-- 資本紀錄將顯示在這裡 -->
                     </tbody>
                 </table>
             </div>
@@ -717,815 +851,4 @@
                         <input type="number" id="twFeeRate" step="0.0001" value="0.1425">
                     </div>
                     <div class="form-group">
-                        <label>整股最低手續費 (元)</label>
-                        <input type="number" id="twMinFee" value="20">
-                    </div>
-                    <div class="form-group">
-                        <label>零股最低手續費 (元)</label>
-                        <input type="number" id="twOddLotMinFee" value="1">
-                    </div>
-                    <div class="form-group">
-                        <label>交易稅率 (%) - 賣出時</label>
-                        <input type="number" id="twTaxRate" step="0.001" value="0.3">
-                    </div>
-                </div>
-
-                <h4 style="color: #007bff; margin: 30px 0 15px 0;">🇺🇸 美股費率設定</h4>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>手續費類型</label>
-                        <select id="usFeeType">
-                            <option value="fixed">固定費用</option>
-                            <option value="percentage">百分比費用</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>固定手續費 (USD)</label>
-                        <input type="number" id="usFixedFee" step="0.01" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>百分比費率 (%)</label>
-                        <input type="number" id="usFeeRate" step="0.0001" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>最低手續費 (USD)</label>
-                        <input type="number" id="usMinFee" step="0.01" value="0">
-                    </div>
-                </div>
-
-                <button class="btn" onclick="saveFeeSettings()">💾 儲存設定</button>
-                <button class="btn" onclick="resetFeeSettings()" style="background: #6c757d;">🔄 重置為預設</button>
-            </div>
-        </div>
-
-        <!-- 匯出功能頁面 -->
-        <div id="export" class="content">
-            <div class="form-section">
-                <h3 style="margin-bottom: 20px; color: #495057;">📤 資料匯出</h3>
-                <div style="text-align: center;">
-                    <button class="btn" onclick="exportToCSV('transactions')">匯出交易紀錄 CSV</button>
-                    <button class="btn btn-exchange" onclick="exportToCSV('exchange')">匯出換匯紀錄 CSV</button>
-                    <button class="btn" onclick="exportToCSV('portfolio')">匯出持倉明細 CSV</button>
-                    <button class="btn" onclick="exportAllData()">匯出完整資料</button>
-                </div>
-            </div>
-            
-            <div class="form-section">
-                <h3 style="margin-bottom: 20px; color: #495057;">🗂️ 資料管理</h3>
-                <div style="text-align: center;">
-                    <input type="file" id="importFile" accept=".json,.csv" style="margin: 10px;">
-                    <br>
-                    <button class="btn" onclick="importData()">匯入資料</button>
-                    <button class="btn btn-danger" onclick="clearAllData()">清空所有資料</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase SDK -->
-    <script type="module">
-		const firebaseConfig = {
-			apiKey: "AIzaSyAFxgqpcgcA2LYL6OkoAmKobHTeqDFCRUY",
-			authDomain: "stock-portfolio-app-d069f.firebaseapp.com",
-			databaseURL: "https://stock-portfolio-app-d069f-default-rtdb.asia-southeast1.firebasedatabase.app",
-			projectId: "stock-portfolio-app-d069f",
-			storageBucket: "stock-portfolio-app-d069f.firebasestorage.app",
-			messagingSenderId: "22049816403",
-			appId: "1:22049816403:web:1d1023c91e855f20daeba6",
-			measurementId: "G-2T6QWCPE2J"
-		};
-
-        // 檢查 Firebase 配置是否已設定
-        const isFirebaseConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
-        
-        if (isFirebaseConfigured) {
-            // 動態載入 Firebase SDK
-            import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js').then(({ initializeApp }) => {
-                return Promise.all([
-                    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'),
-                    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js')
-                ]).then(([{ getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged }, { getDatabase, ref, set, get, onValue }]) => {
-                    // 初始化 Firebase
-                    const app = initializeApp(firebaseConfig);
-                    const auth = getAuth(app);
-                    const database = getDatabase(app);
-                    
-                    window.firebase = { auth, database, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, ref, set, get, onValue };
-                    initializeFirebase();
-                });
-            }).catch(() => {
-                console.log('Firebase SDK 載入失敗，使用離線模式');
-                initializeApp();
-            });
-        } else {
-            console.log('Firebase 未配置，使用離線模式');
-            initializeApp();
-        }
-
-        function initializeFirebase() {
-            // 監聽身份驗證狀態
-            window.firebase.onAuthStateChanged(window.firebase.auth, (user) => {
-                if (user) {
-                    updateSyncStatus('已登入: ' + user.email, true);
-                    document.getElementById('authSection').classList.add('hidden');
-                    document.getElementById('signOutBtn').style.display = 'inline-block';
-                    document.getElementById('syncBtn').disabled = false;
-                    
-                    // 自動載入用戶資料
-                    loadUserData();
-                } else {
-                    updateSyncStatus('離線模式', false);
-                    document.getElementById('authSection').classList.remove('hidden');
-                    document.getElementById('signOutBtn').style.display = 'none';
-                    document.getElementById('syncBtn').disabled = true;
-                }
-            });
-            
-            initializeApp();
-        }
-
-        function initializeApp() {
-            // 初始化應用程式
-            loadLocalData();
-            updateTransactionTable();
-            updateExchangeTable();
-            updatePortfolio();
-            loadFeeSettings();
-            setDefaultDates();
-        }
-    </script>
-
-    <script>
-        // 全域變數
-        let transactions = [];
-        let exchanges = [];
-        let feeSettings = {
-            tw: {
-                feeRate: 0.1425,
-                minFee: 20,
-                oddLotMinFee: 1,
-                taxRate: 0.3
-            },
-            us: {
-                feeType: 'fixed',
-                fixedFee: 0,
-                feeRate: 0,
-                minFee: 0
-            }
-        };
-        let currentPrices = {};
-        let currentUser = null;
-
-        // Firebase 認證功能
-        async function signUp() {
-            const email = document.getElementById('userEmail').value;
-            const password = document.getElementById('userPassword').value;
-            
-            if (!email || !password) {
-                showNotification('請輸入電子郵件和密碼', 'error');
-                return;
-            }
-            
-            try {
-                showLoading(true);
-                await window.firebase.createUserWithEmailAndPassword(window.firebase.auth, email, password);
-                showNotification('註冊成功！', 'success');
-                document.getElementById('userEmail').value = '';
-                document.getElementById('userPassword').value = '';
-            } catch (error) {
-                showNotification('註冊失敗: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        async function signIn() {
-            const email = document.getElementById('userEmail').value;
-            const password = document.getElementById('userPassword').value;
-            
-            if (!email || !password) {
-                showNotification('請輸入電子郵件和密碼', 'error');
-                return;
-            }
-            
-            try {
-                showLoading(true);
-                await window.firebase.signInWithEmailAndPassword(window.firebase.auth, email, password);
-                showNotification('登入成功！', 'success');
-                document.getElementById('userEmail').value = '';
-                document.getElementById('userPassword').value = '';
-            } catch (error) {
-                showNotification('登入失敗: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        async function signOut() {
-            try {
-                await window.firebase.signOut(window.firebase.auth);
-                showNotification('已登出', 'success');
-            } catch (error) {
-                showNotification('登出失敗: ' + error.message, 'error');
-            }
-        }
-
-        // 資料同步功能
-        async function syncData() {
-            if (!window.firebase || !window.firebase.auth.currentUser) {
-                showNotification('請先登入', 'error');
-                return;
-            }
-
-            try {
-                showLoading(true);
-                const userId = window.firebase.auth.currentUser.uid;
-                const userDataRef = window.firebase.ref(window.firebase.database, `users/${userId}`);
-                
-                const userData = {
-                    transactions: transactions,
-                    exchanges: exchanges,
-                    feeSettings: feeSettings,
-                    lastSync: new Date().toISOString()
-                };
-                
-                await window.firebase.set(userDataRef, userData);
-                showNotification('資料同步成功！', 'success');
-            } catch (error) {
-                showNotification('同步失敗: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        async function loadUserData() {
-            if (!window.firebase || !window.firebase.auth.currentUser) return;
-
-            try {
-                showLoading(true);
-                const userId = window.firebase.auth.currentUser.uid;
-                const userDataRef = window.firebase.ref(window.firebase.database, `users/${userId}`);
-                const snapshot = await window.firebase.get(userDataRef);
-                
-                if (snapshot.exists()) {
-                    const userData = snapshot.val();
-                    transactions = userData.transactions || [];
-                    exchanges = userData.exchanges || [];
-                    feeSettings = userData.feeSettings || feeSettings;
-                    
-                    // 更新所有顯示
-                    updateTransactionTable();
-                    updateExchangeTable();
-                    updatePortfolio();
-                    loadFeeSettings();
-                    
-                    showNotification('資料載入成功', 'success');
-                }
-            } catch (error) {
-                showNotification('載入資料失敗: ' + error.message, 'error');
-                // 如果雲端載入失敗，則載入本地資料
-                loadLocalData();
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        // 本地資料管理
-        function loadLocalData() {
-            try {
-                transactions = JSON.parse(localStorage.getItem('stockTransactions') || '[]');
-                exchanges = JSON.parse(localStorage.getItem('exchangeRecords') || '[]');
-                const savedSettings = localStorage.getItem('feeSettings');
-                if (savedSettings) {
-                    feeSettings = JSON.parse(savedSettings);
-                }
-            } catch (error) {
-                console.error('載入本地資料失敗:', error);
-                transactions = [];
-                exchanges = [];
-            }
-        }
-
-        function saveLocalData() {
-            try {
-                localStorage.setItem('stockTransactions', JSON.stringify(transactions));
-                localStorage.setItem('exchangeRecords', JSON.stringify(exchanges));
-                localStorage.setItem('feeSettings', JSON.stringify(feeSettings));
-            } catch (error) {
-                console.error('儲存本地資料失敗:', error);
-            }
-        }
-
-        // UI 輔助功能
-        function updateSyncStatus(text, isOnline) {
-            const statusElement = document.getElementById('syncStatus');
-            const statusText = document.getElementById('statusText');
-            
-            statusText.textContent = text;
-            statusElement.className = `sync-status ${isOnline ? 'online' : 'offline'}`;
-        }
-
-        function showLoading(show) {
-            const spinner = document.getElementById('loadingSpinner');
-            const syncBtn = document.getElementById('syncBtnText');
-            
-            if (show) {
-                spinner.style.display = 'inline-block';
-                syncBtn.textContent = '同步中...';
-            } else {
-                spinner.style.display = 'none';
-                syncBtn.textContent = '🔄 同步資料';
-            }
-        }
-
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => notification.classList.add('show'), 100);
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => document.body.removeChild(notification), 300);
-            }, 3000);
-        }
-
-        // 頁面切換
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-            
-            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
-            document.getElementById(tabName).classList.add('active');
-            
-            if (tabName === 'portfolio') updatePortfolio();
-            if (tabName === 'analysis') updateAnalysis();
-            if (tabName === 'exchange') updateExchangeTable();
-            if (tabName === 'settings') loadFeeSettings();
-        }
-
-        // 設定預設日期
-        function setDefaultDates() {
-            document.getElementById('date').valueAsDate = new Date();
-            document.getElementById('exchangeDate').valueAsDate = new Date();
-        }
-
-        // 交易表單處理
-        document.getElementById('transactionForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const transaction = {
-                id: Date.now(),
-                date: document.getElementById('date').value,
-                market: document.getElementById('market').value,
-                symbol: document.getElementById('symbol').value.toUpperCase(),
-                name: document.getElementById('name').value,
-                type: document.getElementById('type').value,
-                quantity: parseFloat(document.getElementById('quantity').value),
-                price: parseFloat(document.getElementById('price').value),
-                isOddLot: document.getElementById('oddLot').value === 'true',
-                fee: parseFloat(document.getElementById('fee').value) || 0,
-                tax: parseFloat(document.getElementById('tax').value) || 0,
-                note: document.getElementById('note').value
-            };
-            
-            // 計算總金額
-            if (transaction.type === '買進') {
-                transaction.totalAmount = (transaction.quantity * transaction.price) + transaction.fee + transaction.tax;
-            } else {
-                transaction.totalAmount = (transaction.quantity * transaction.price) - transaction.fee - transaction.tax;
-            }
-            
-            transactions.push(transaction);
-            saveLocalData();
-            updateTransactionTable();
-            this.reset();
-            setDefaultDates();
-            document.getElementById('oddLot').value = 'false';
-            
-            showNotification('交易紀錄已新增成功！', 'success');
-        });
-
-        // 換匯表單處理
-        document.getElementById('exchangeForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const exchange = {
-                id: Date.now(),
-                date: document.getElementById('exchangeDate').value,
-                type: document.getElementById('exchangeType').value,
-                fromAmount: parseFloat(document.getElementById('fromAmount').value),
-                rate: parseFloat(document.getElementById('exchangeRate').value),
-                toAmount: parseFloat(document.getElementById('toAmount').value),
-                fee: parseFloat(document.getElementById('exchangeFee').value) || 0,
-                bank: document.getElementById('exchangeBank').value,
-                note: document.getElementById('exchangeNote').value
-            };
-            
-            exchanges.push(exchange);
-            saveLocalData();
-            updateExchangeTable();
-            this.reset();
-            setDefaultDates();
-            
-            showNotification('換匯紀錄已新增成功！', 'success');
-        });
-
-        // 計算換匯兌入金額
-        function calculateExchangeAmount() {
-            const fromAmount = parseFloat(document.getElementById('fromAmount').value) || 0;
-            const rate = parseFloat(document.getElementById('exchangeRate').value) || 0;
-            
-            if (fromAmount && rate) {
-                const toAmount = fromAmount * rate;
-                document.getElementById('toAmount').value = toAmount.toFixed(4);
-            }
-        }
-
-        // 更新交易紀錄表格
-        function updateTransactionTable() {
-            const tbody = document.getElementById('transactionTable');
-            tbody.innerHTML = '';
-            
-            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedTransactions.forEach(transaction => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${transaction.date}</td>
-                    <td><span class="market-indicator market-${transaction.market.toLowerCase()}">${transaction.market}</span></td>
-                    <td>${transaction.symbol}</td>
-                    <td>${transaction.name}</td>
-                    <td><span style="color: ${transaction.type === '買進' ? '#28a745' : '#dc3545'}">${transaction.type}</span></td>
-                    <td>${transaction.quantity.toLocaleString()}</td>
-                    <td>${transaction.price.toFixed(2)}</td>
-                    <td>${transaction.isOddLot ? '✓' : '✗'}</td>
-                    <td>${transaction.fee.toFixed(2)}</td>
-                    <td>${transaction.tax.toFixed(2)}</td>
-                    <td>${transaction.totalAmount.toFixed(2)}</td>
-                    <td>${transaction.note || '-'}</td>
-                    <td><button class="delete-btn" onclick="deleteTransaction(${transaction.id})">刪除</button></td>
-                `;
-            });
-        }
-
-        // 更新換匯紀錄表格
-        function updateExchangeTable() {
-            const tbody = document.getElementById('exchangeTable');
-            tbody.innerHTML = '';
-            
-            const sortedExchanges = [...exchanges].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedExchanges.forEach(exchange => {
-                const [fromCurrency, toCurrency] = exchange.type.split('-');
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${exchange.date}</td>
-                    <td>${fromCurrency} → ${toCurrency}</td>
-                    <td>${exchange.fromAmount.toLocaleString()} ${fromCurrency}</td>
-                    <td>${exchange.rate.toFixed(4)}</td>
-                    <td>${exchange.toAmount.toLocaleString()} ${toCurrency}</td>
-                    <td>${exchange.fee.toFixed(2)}</td>
-                    <td>${exchange.bank || '-'}</td>
-                    <td>${exchange.note || '-'}</td>
-                    <td><button class="delete-btn" onclick="deleteExchange(${exchange.id})">刪除</button></td>
-                `;
-            });
-        }
-
-        // 刪除功能
-        function deleteTransaction(id) {
-            if (confirm('確定要刪除此交易紀錄嗎？')) {
-                transactions = transactions.filter(t => t.id !== id);
-                saveLocalData();
-                updateTransactionTable();
-                updatePortfolio();
-                showNotification('交易紀錄已刪除', 'success');
-            }
-        }
-
-        function deleteExchange(id) {
-            if (confirm('確定要刪除此換匯紀錄嗎？')) {
-                exchanges = exchanges.filter(e => e.id !== id);
-                saveLocalData();
-                updateExchangeTable();
-                updateAnalysis();
-                showNotification('換匯紀錄已刪除', 'success');
-            }
-        }
-
-        // 計算手續費和交易稅
-        function calculateFees() {
-            const market = document.getElementById('market').value;
-            const quantity = parseFloat(document.getElementById('quantity').value) || 0;
-            const price = parseFloat(document.getElementById('price').value) || 0;
-            const type = document.getElementById('type').value;
-            const isOddLot = document.getElementById('oddLot').value === 'true';
-            
-            if (!market || !quantity || !price) {
-                document.getElementById('fee').value = '';
-                document.getElementById('tax').value = '';
-                return;
-            }
-            
-            const totalAmount = quantity * price;
-            let fee = 0;
-            let tax = 0;
-            
-            if (market === 'TW') {
-                const feeRate = feeSettings.tw.feeRate / 100;
-                fee = totalAmount * feeRate;
-                const minFee = isOddLot ? feeSettings.tw.oddLotMinFee : feeSettings.tw.minFee;
-                fee = Math.max(fee, minFee);
-                
-                if (type === '賣出') {
-                    tax = totalAmount * (feeSettings.tw.taxRate / 100);
-                }
-            } else if (market === 'US') {
-                if (feeSettings.us.feeType === 'fixed') {
-                    fee = feeSettings.us.fixedFee;
-                } else {
-                    fee = totalAmount * (feeSettings.us.feeRate / 100);
-                    fee = Math.max(fee, feeSettings.us.minFee);
-                }
-            }
-            
-            document.getElementById('fee').value = fee.toFixed(2);
-            document.getElementById('tax').value = tax.toFixed(2);
-        }
-
-        // 更新持倉明細
-        function updatePortfolio() {
-            const portfolio = {};
-            
-            transactions.forEach(transaction => {
-                const key = `${transaction.market}-${transaction.symbol}`;
-                
-                if (!portfolio[key]) {
-                    portfolio[key] = {
-                        market: transaction.market,
-                        symbol: transaction.symbol,
-                        name: transaction.name,
-                        totalQuantity: 0,
-                        totalCost: 0,
-                        transactions: []
-                    };
-                }
-                
-                portfolio[key].transactions.push(transaction);
-                
-                if (transaction.type === '買進') {
-                    portfolio[key].totalQuantity += transaction.quantity;
-                    portfolio[key].totalCost += transaction.totalAmount;
-                } else {
-                    portfolio[key].totalQuantity -= transaction.quantity;
-                    if (portfolio[key].totalQuantity + transaction.quantity > 0) {
-                        const avgCost = portfolio[key].totalCost / (portfolio[key].totalQuantity + transaction.quantity);
-                        portfolio[key].totalCost -= transaction.quantity * avgCost;
-                    }
-                }
-            });
-            
-            const tbody = document.getElementById('portfolioTable');
-            tbody.innerHTML = '';
-            
-            Object.values(portfolio).forEach(holding => {
-                if (holding.totalQuantity > 0) {
-                    const avgCost = holding.totalCost / holding.totalQuantity;
-                    const currentPrice = getCurrentPrice(holding.symbol, holding.market);
-                    const marketValue = holding.totalQuantity * currentPrice;
-                    const unrealizedPL = marketValue - holding.totalCost;
-                    const returnRate = (unrealizedPL / holding.totalCost) * 100;
-                    
-                    const row = tbody.insertRow();
-                    row.innerHTML = `
-                        <td><span class="market-indicator market-${holding.market.toLowerCase()}">${holding.market}</span></td>
-                        <td>${holding.symbol}</td>
-                        <td>${holding.name}</td>
-                        <td>${holding.totalQuantity.toLocaleString()}</td>
-                        <td>${avgCost.toFixed(2)}</td>
-                        <td>${holding.totalCost.toFixed(2)}</td>
-                        <td>${currentPrice.toFixed(2)}</td>
-                        <td>${marketValue.toFixed(2)}</td>
-                        <td class="${unrealizedPL >= 0 ? 'profit' : 'loss'}">${unrealizedPL.toFixed(2)}</td>
-                        <td class="${returnRate >= 0 ? 'profit' : 'loss'}">${returnRate.toFixed(2)}%</td>
-                    `;
-                }
-            });
-        }
-
-        // 獲取現價（模擬）
-        function getCurrentPrice(symbol, market) {
-            const key = `${market}-${symbol}`;
-            if (!currentPrices[key]) {
-                const lastTransaction = transactions
-                    .filter(t => t.symbol === symbol && t.market === market)
-                    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-                
-                if (lastTransaction) {
-                    const basePrice = lastTransaction.price;
-                    const fluctuation = (Math.random() - 0.5) * 0.1;
-                    currentPrices[key] = basePrice * (1 + fluctuation);
-                } else {
-                    currentPrices[key] = 100;
-                }
-            }
-            return currentPrices[key];
-        }
-
-        // 更新績效分析
-        function updateAnalysis() {
-            let totalInvestment = 0;
-            let totalValue = 0;
-            let totalExchangeFee = 0;
-            
-            const portfolio = {};
-            transactions.forEach(transaction => {
-                const key = `${transaction.market}-${transaction.symbol}`;
-                
-                if (!portfolio[key]) {
-                    portfolio[key] = {
-                        totalQuantity: 0,
-                        totalCost: 0,
-                        name: transaction.name
-                    };
-                }
-                
-                if (transaction.type === '買進') {
-                    portfolio[key].totalQuantity += transaction.quantity;
-                    portfolio[key].totalCost += transaction.totalAmount;
-                } else {
-                    portfolio[key].totalQuantity -= transaction.quantity;
-                    if (portfolio[key].totalQuantity + transaction.quantity > 0) {
-                        const avgCost = portfolio[key].totalCost / (portfolio[key].totalQuantity + transaction.quantity);
-                        portfolio[key].totalCost -= transaction.quantity * avgCost;
-                    }
-                }
-            });
-            
-            Object.entries(portfolio).forEach(([key, holding]) => {
-                if (holding.totalQuantity > 0) {
-                    totalInvestment += holding.totalCost;
-                    const [market, symbol] = key.split('-');
-                    const currentPrice = getCurrentPrice(symbol, market);
-                    totalValue += holding.totalQuantity * currentPrice;
-                }
-            });
-            
-            exchanges.forEach(exchange => {
-                totalExchangeFee += exchange.fee;
-            });
-            
-            const totalProfit = totalValue - totalInvestment;
-            const totalReturn = totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0;
-            
-            document.getElementById('totalInvestment').textContent = `${totalInvestment.toFixed(2)}`;
-            document.getElementById('totalValue').textContent = `${totalValue.toFixed(2)}`;
-            document.getElementById('totalProfit').textContent = `${totalProfit.toFixed(2)}`;
-            document.getElementById('totalProfit').className = totalProfit >= 0 ? 'stat-value profit' : 'stat-value loss';
-            document.getElementById('totalReturn').textContent = `${totalReturn.toFixed(2)}%`;
-            document.getElementById('totalReturn').className = totalReturn >= 0 ? 'stat-value profit' : 'stat-value loss';
-            document.getElementById('totalExchangeFee').textContent = `${totalExchangeFee.toFixed(2)}`;
-        }
-
-        // 費率設定功能
-        function loadFeeSettings() {
-            document.getElementById('twFeeRate').value = feeSettings.tw.feeRate;
-            document.getElementById('twMinFee').value = feeSettings.tw.minFee;
-            document.getElementById('twOddLotMinFee').value = feeSettings.tw.oddLotMinFee;
-            document.getElementById('twTaxRate').value = feeSettings.tw.taxRate;
-            
-            document.getElementById('usFeeType').value = feeSettings.us.feeType;
-            document.getElementById('usFixedFee').value = feeSettings.us.fixedFee;
-            document.getElementById('usFeeRate').value = feeSettings.us.feeRate;
-            document.getElementById('usMinFee').value = feeSettings.us.minFee;
-        }
-
-        function saveFeeSettings() {
-            feeSettings.tw.feeRate = parseFloat(document.getElementById('twFeeRate').value);
-            feeSettings.tw.minFee = parseFloat(document.getElementById('twMinFee').value);
-            feeSettings.tw.oddLotMinFee = parseFloat(document.getElementById('twOddLotMinFee').value);
-            feeSettings.tw.taxRate = parseFloat(document.getElementById('twTaxRate').value);
-            
-            feeSettings.us.feeType = document.getElementById('usFeeType').value;
-            feeSettings.us.fixedFee = parseFloat(document.getElementById('usFixedFee').value);
-            feeSettings.us.feeRate = parseFloat(document.getElementById('usFeeRate').value);
-            feeSettings.us.minFee = parseFloat(document.getElementById('usMinFee').value);
-            
-            saveLocalData();
-            showNotification('費率設定已儲存！', 'success');
-        }
-
-        function resetFeeSettings() {
-            if (confirm('確定要重置為預設費率設定嗎？')) {
-                feeSettings = {
-                    tw: {
-                        feeRate: 0.1425,
-                        minFee: 20,
-                        oddLotMinFee: 1,
-                        taxRate: 0.3
-                    },
-                    us: {
-                        feeType: 'fixed',
-                        fixedFee: 0,
-                        feeRate: 0,
-                        minFee: 0
-                    }
-                };
-                saveLocalData();
-                loadFeeSettings();
-                showNotification('已重置為預設設定！', 'success');
-            }
-        }
-
-        // 匯出功能
-        function exportToCSV(type) {
-            let csvContent = '';
-            let filename = '';
-            
-            if (type === 'transactions') {
-                csvContent = 'Date,Market,Symbol,Name,Type,Quantity,Price,OddLot,Fee,Tax,Total Amount,Note\n';
-                transactions.forEach(t => {
-                    csvContent += `${t.date},${t.market},${t.symbol},"${t.name}",${t.type},${t.quantity},${t.price},${t.isOddLot ? 'Yes' : 'No'},${t.fee},${t.tax},${t.totalAmount},"${t.note}"\n`;
-                });
-                filename = 'stock_transactions.csv';
-            } else if (type === 'exchange') {
-                csvContent = 'Date,Exchange Type,From Amount,Rate,To Amount,Fee,Bank,Note\n';
-                exchanges.forEach(e => {
-                    csvContent += `${e.date},${e.type},${e.fromAmount},${e.rate},${e.toAmount},${e.fee},"${e.bank}","${e.note}"\n`;
-                });
-                filename = 'exchange_records.csv';
-            }
-            
-            downloadCSV(csvContent, filename);
-        }
-
-        function downloadCSV(csvContent, filename) {
-            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function exportAllData() {
-            const data = {
-                transactions: transactions,
-                exchanges: exchanges,
-                feeSettings: feeSettings,
-                exportDate: new Date().toISOString()
-            };
-            
-            const dataStr = JSON.stringify(data, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'stock_portfolio_complete_backup.json';
-            link.click();
-        }
-
-        function clearAllData() {
-            if (confirm('確定要清空所有資料嗎？此操作無法復原！')) {
-                transactions = [];
-                exchanges = [];
-                currentPrices = {};
-                saveLocalData();
-                updateTransactionTable();
-                updateExchangeTable();
-                updatePortfolio();
-                showNotification('所有資料已清空！', 'success');
-            }
-        }
-
-        // 事件綁定
-        document.getElementById('fromAmount').addEventListener('input', calculateExchangeAmount);
-        document.getElementById('exchangeRate').addEventListener('input', calculateExchangeAmount);
-
-        ['market', 'quantity', 'price', 'type', 'oddLot'].forEach(id => {
-            document.getElementById(id).addEventListener('change', calculateFees);
-            document.getElementById(id).addEventListener('input', calculateFees);
-        });
-
-                document.getElementById('market').addEventListener('change', function() {
-            const market = this.value;
-            const oddLotGroup = document.getElementById('oddLot').parentElement;
-            
-            if (market === 'TW') {
-                oddLotGroup.style.display = 'flex';
-            } else {
-                oddLotGroup.style.display = 'none';
-                document.getElementById('oddLot').value = 'false';
-            }
-            
-            calculateFees();
-        });
-    </script>
-</body>
-</html>
-//作者zhangjy
+                        <label
