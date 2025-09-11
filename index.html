@@ -1864,10 +1864,16 @@
       if (finnhubKey) finnhubKey.value = appSettings.finnhubKey || '';
       
       // 載入 Firebase 設定
-      const firebaseConfigEl = document.getElementById('firebaseConfig');
-      if (firebaseConfigEl && firebaseConfig) {
-        firebaseConfigEl.value = JSON.stringify(firebaseConfig, null, 2);
-      }
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFxgqpcgcA2LYL6OkoAmKobHTeqDFCRUY",
+      authDomain: "stock-portfolio-app-d069f.firebaseapp.com",
+      databaseURL: "https://stock-portfolio-app-d069f-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "stock-portfolio-app-d069f",
+      storageBucket: "stock-portfolio-app-d069f.firebasestorage.app",
+      messagingSenderId: "22049816403",
+      appId: "1:22049816403:web:1d1023c91e855f20daeba6",
+      measurementId: "G-2T6QWCPE2J"
+};
     }
     
     function saveAppSettings() {
@@ -2177,3 +2183,4 @@
   </script>
 </body>
 </html>
+
