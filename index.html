@@ -28,8 +28,8 @@
     .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:16px; }
     .form-group { display:flex; flex-direction:column; }
     .form-group label { font-weight:700; margin-bottom:6px; color:#2f3640; }
-    .form-group input, .form-group select { padding:12px; border:2px solid #e9ecef; border-radius:10px; font-size:14px; transition:border-color .2s ease; background:#fff; }
-    .form-group input:focus, .form-group select:focus { outline:none; border-color:#4facfe; }
+    .form-group input, .form-group select, .form-group textarea { padding:12px; border:2px solid #e9ecef; border-radius:10px; font-size:14px; transition:border-color .2s ease; background:#fff; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#4facfe; }
     .btn { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); color:white; border:none; padding:13px 22px; border-radius:10px; font-size:15px; font-weight:800; cursor:pointer; transition:transform .15s ease; margin:5px; }
     .btn:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(79,172,254,.35); }
     .btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
@@ -51,6 +51,7 @@
     .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-bottom:22px; }
     .stat-card { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:20px; border-radius:15px; text-align:center; box-shadow:0 10px 25px rgba(102,126,234,.28); }
     .capital-card { background:linear-gradient(135deg,#2ecc71 0%,#27ae60 100%); color:white; padding:20px; border-radius:15px; text-align:center; box-shadow:0 10px 25px rgba(46,204,113,.28); }
+    .deposit-card { background:linear-gradient(135deg,#f39c12 0%,#e67e22 100%); color:white; padding:20px; border-radius:15px; text-align:center; box-shadow:0 10px 25px rgba(243,156,18,.28); }
     .stat-value { font-size:1.8em; font-weight:900; margin-bottom:6px; }
     .stat-label { font-size:1em; opacity:.9; }
     .delete-btn { background:#dc3545; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px; }
@@ -112,7 +113,7 @@
         <span id="statusText">離線模式</span>
       </div>
       <h1>📈 股票投資組合管理系統</h1>
-      <p>多帳戶｜台/美股記錄與績效分析｜統一報價API｜雲端同步</p>
+      <p>多帳戶｜台/美股記錄與績效分析｜定存管理｜雲端同步</p>
 
       <div class="auth-section" id="authSection">
         <div class="auth-form">
@@ -122,8 +123,8 @@
           <button onclick="signUp()">註冊</button>
           <button onclick="signOut()" id="signOutBtn" style="display:none;">登出</button>
         </div>
-        <p style="font-size:12px; margin-top:10px; opacity:.8;">本地模式可完整使用所有功能，雲端同步需配置Firebase</p>
-        <div id="firebaseStatus" class="api-status warning">Firebase: 未配置 (僅本地模式)</div>
+        <p style="font-size:12px; margin-top:10px; opacity:.8;">Firebase已預設配置，本地模式可完整使用所有功能</p>
+        <div id="firebaseStatus" class="api-status success">Firebase: 已連線</div>
       </div>
 
       <!-- 多帳戶：帳戶切換器 -->
@@ -143,6 +144,7 @@
       <button class="tab" onclick="switchTab('exchange')">換匯紀錄</button>
       <button class="tab" onclick="switchTab('portfolio')">持倉明細</button>
       <button class="tab" onclick="switchTab('capital')">資本管理</button>
+      <button class="tab" onclick="switchTab('deposits')">定存系統</button>
       <button class="tab" onclick="switchTab('analysis')">績效分析</button>
       <button class="tab" onclick="switchTab('settings')">費率/報價設定</button>
       <button class="tab" onclick="switchTab('export')">匯出功能</button>
@@ -387,6 +389,117 @@
       </div>
     </div>
 
+    <!-- 定存系統 -->
+    <div id="deposits" class="content">
+      <div class="form-section">
+        <h3 style="margin-bottom:14px; color:#495057;">🏦 新增定存記錄</h3>
+        <form id="depositForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>開始日期</label>
+              <input type="date" id="depositStartDate" required>
+            </div>
+            <div class="form-group">
+              <label>到期日期</label>
+              <input type="date" id="depositEndDate" required>
+            </div>
+            <div class="form-group">
+              <label>銀行名稱</label>
+              <input type="text" id="depositBank" placeholder="例：台灣銀行、富邦銀行" required>
+            </div>
+            <div class="form-group">
+              <label>定存類型</label>
+              <select id="depositType" required>
+                <option value="">選擇類型</option>
+                <option value="定期存款">定期存款</option>
+                <option value="定期儲蓄存款">定期儲蓄存款</option>
+                <option value="外幣定存">外幣定存</option>
+                <option value="數位帳戶">數位帳戶高利定存</option>
+                <option value="大額定存">大額定存</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>幣別</label>
+              <select id="depositCurrency" required>
+                <option value="TWD">台幣 (TWD)</option>
+                <option value="USD">美元 (USD)</option>
+                <option value="CNY">人民幣 (CNY)</option>
+                <option value="JPY">日圓 (JPY)</option>
+                <option value="EUR">歐元 (EUR)</option>
+                <option value="AUD">澳幣 (AUD)</option>
+                <option value="NZD">紐幣 (NZD)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>本金</label>
+              <input type="number" id="depositPrincipal" step="0.01" placeholder="存入金額" required>
+            </div>
+            <div class="form-group">
+              <label>年利率 (%)</label>
+              <input type="number" id="depositRate" step="0.01" placeholder="例：1.35" required>
+            </div>
+            <div class="form-group">
+              <label>存期 (月)</label>
+              <input type="number" id="depositTerm" placeholder="自動計算" readonly>
+            </div>
+            <div class="form-group">
+              <label>計息方式</label>
+              <select id="depositInterestType">
+                <option value="simple">單利</option>
+                <option value="compound">複利 (月複利)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>預計利息</label>
+              <input type="number" id="depositInterest" step="0.01" placeholder="自動計算" readonly>
+            </div>
+            <div class="form-group">
+              <label>到期本息</label>
+              <input type="number" id="depositMaturityAmount" step="0.01" placeholder="自動計算" readonly>
+            </div>
+            <div class="form-group">
+              <label>備註</label>
+              <input type="text" id="depositNote" placeholder="選填">
+            </div>
+          </div>
+          <button type="button" onclick="calculateDepositInterest()" class="btn btn-neutral">🧮 計算利息</button>
+          <button type="submit" class="btn">🏦 新增定存</button>
+        </form>
+      </div>
+
+      <div class="stats-grid">
+        <div class="deposit-card">
+          <div class="stat-value" id="totalDepositPrincipal">$0</div>
+          <div class="stat-label">定存本金總額</div>
+        </div>
+        <div class="deposit-card">
+          <div class="stat-value" id="totalDepositInterest">$0</div>
+          <div class="stat-label">預計利息收入</div>
+        </div>
+        <div class="deposit-card">
+          <div class="stat-value" id="activeDepositsCount">0</div>
+          <div class="stat-label">活躍定存筆數</div>
+        </div>
+        <div class="deposit-card">
+          <div class="stat-value" id="avgDepositRate">0%</div>
+          <div class="stat-label">平均年利率</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+          <tr>
+            <th>銀行</th><th>類型</th><th>幣別</th><th>本金</th>
+            <th>年利率</th><th>存期</th><th>開始日期</th><th>到期日期</th>
+            <th>預計利息</th><th>到期本息</th><th>狀態</th><th>備註</th><th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="depositTable"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- 績效分析 -->
     <div id="analysis" class="content">
       <div class="stats-grid">
@@ -417,6 +530,10 @@
         <div class="stat-card">
           <div class="stat-value" id="fxProfitTotal">$0</div>
           <div class="stat-label">換匯損益（TWD）</div>
+        </div>
+        <div class="deposit-card">
+          <div class="stat-value" id="totalDepositValue">$0</div>
+          <div class="stat-label">定存總價值</div>
         </div>
       </div>
 
@@ -513,8 +630,8 @@
 
       <!-- 報價設定 -->
       <div class="form-section">
-        <h3 style="margin-bottom:14px; color:#495057;">📡 統一報價設定</h3>
-        <div id="priceApiStatus" class="api-status warning">API狀態：未測試</div>
+        <h3 style="margin-bottom:14px; color:#495057;">📡 混合型報價設定</h3>
+        <div id="priceApiStatus" class="api-status success">API狀態：混合型模式 (台股TWSE + 美股Finnhub)</div>
         <div class="form-grid">
           <div class="form-group">
             <label>使用即時報價</label>
@@ -524,24 +641,13 @@
             </select>
           </div>
           <div class="form-group">
-            <label>報價API選擇</label>
-            <select id="priceApiProvider">
-              <option value="unified">統一API (推薦)</option>
-              <option value="separate">分離API (原模式)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Alpha Vantage API Key (統一)</label>
-            <input type="text" id="alphaVantageKey" placeholder="免費申請: alphavantage.co">
-          </div>
-          <div class="form-group">
             <label>Finnhub API Key (美股)</label>
-            <input type="text" id="finnhubKey" placeholder="僅分離模式使用">
+            <input type="text" id="finnhubKey" placeholder="美股查價API金鑰">
           </div>
         </div>
         <small style="display:block; margin:6px 0; color:#555;">
-          <strong>統一API：</strong>使用Alpha Vantage，台股、美股皆支援<br>
-          <strong>分離API：</strong>台股用TWSE，美股用Finnhub（原模式）
+          <strong>台股：</strong>使用 TWSE 官方API (無需金鑰)<br>
+          <strong>美股：</strong>使用 Finnhub API (需註冊取得免費金鑰)
         </small>
         <button class="btn" onclick="saveAppSettings()">💾 儲存報價設定</button>
         <button class="btn btn-neutral" onclick="testApiConnection()">🔍 測試API連線</button>
@@ -557,7 +663,7 @@
           </div>
         </div>
         <small style="display:block; margin:6px 0; color:#555;">
-          請到 Firebase Console 建立專案，啟用 Authentication 和 Realtime Database，並貼上設定檔案
+          系統已預設配置Firebase，如需使用自己的專案請修改上方設定
         </small>
         <button class="btn" onclick="saveFirebaseConfig()">💾 儲存Firebase設定</button>
         <button class="btn btn-neutral" onclick="initializeFirebase()">🔄 重新初始化</button>
@@ -572,6 +678,7 @@
           <button class="btn btn-light" onclick="exportToCSV('transactions')">匯出交易紀錄 CSV</button>
           <button class="btn btn-light" onclick="exportToCSV('exchange')">匯出換匯紀錄 CSV</button>
           <button class="btn btn-light" onclick="exportToCSV('capital')">匯出資本紀錄 CSV</button>
+          <button class="btn btn-light" onclick="exportToCSV('deposits')">匯出定存紀錄 CSV</button>
           <button class="btn" onclick="exportAllData()">💾 匯出完整備份（JSON）</button>
           <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清空所有資料</button>
         </div>
@@ -644,11 +751,12 @@
     let transactions = [];
     let exchanges = [];
     let capitalRecords = [];
+    let deposits = [];
     let feeSettings = {
       tw: { feeRate: 0.1425, minFee: 20, oddLotMinFee: 1, taxRate: 0.3 },
       us: { feeType: 'fixed', fixedFee: 0, feeRate: 0, minFee: 0 }
     };
-    let currentPrices = {}; // { key: { value, _ts } }
+    let currentPrices = {};
     let currentSellStock = null;
     let lastPeekPrice = null;
 
@@ -661,12 +769,33 @@
     let appSettings = JSON.parse(localStorage.getItem('appSettings') || '{}');
     if (!appSettings || typeof appSettings !== 'object') appSettings = {};
     if (appSettings.useLivePrice === undefined) appSettings.useLivePrice = true;
-    if (!appSettings.priceApiProvider) appSettings.priceApiProvider = 'unified';
-    if (!appSettings.alphaVantageKey) appSettings.alphaVantageKey = '';
     if (!appSettings.finnhubKey) appSettings.finnhubKey = 'd30rabhr01qnu2qvafv0d30rabhr01qnu2qvafvg';
 
-    // Firebase設定
-    let firebaseConfig = JSON.parse(localStorage.getItem('firebaseConfig') || 'null');
+    // Firebase設定 - 預設配置
+    let firebaseConfig = {
+      apiKey: "AIzaSyAFxgqpcgcA2LYL6OkoAmKobHTeqDFCRUY",
+      authDomain: "stock-portfolio-app-d069f.firebaseapp.com",
+      databaseURL: "https://stock-portfolio-app-d069f-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "stock-portfolio-app-d069f",
+      storageBucket: "stock-portfolio-app-d069f.firebasestorage.app",
+      messagingSenderId: "22049816403",
+      appId: "1:22049816403:web:1d1023c91e855f20daeba6",
+      measurementId: "G-2T6QWCPE2J"
+    };
+
+    // 允許用戶覆蓋配置
+    const savedConfig = localStorage.getItem('firebaseConfig');
+    if (savedConfig) {
+      try {
+        const customConfig = JSON.parse(savedConfig);
+        if (customConfig.apiKey && customConfig.projectId) {
+          firebaseConfig = customConfig;
+        }
+      } catch(e) {
+        console.warn('載入自定義Firebase配置失敗，使用預設配置');
+      }
+    }
+
     let firebaseApp = null;
 
     // =========================
@@ -676,15 +805,16 @@
       ready:false, _auth:null, _db:null,
       init() {
         try {
-          if (firebaseConfig && window.firebase) {
+          if (window.firebase) {
             firebaseApp = firebase.initializeApp(firebaseConfig);
             this._auth = firebase.auth();
             this._db = firebase.database();
             this.ready = true;
             updateFirebaseStatus('Firebase: 已連線', 'success');
+            console.log('Firebase已成功初始化');
           } else {
             this.ready = false;
-            updateFirebaseStatus('Firebase: 未配置 (僅本地模式)', 'warning');
+            updateFirebaseStatus('Firebase: SDK載入失敗', 'error');
           }
         } catch(e){ 
           this.ready = false; 
@@ -694,11 +824,11 @@
       },
       currentUser(){ return this._auth && this._auth.currentUser ? this._auth.currentUser : null; },
       async createUser(email, pw){
-        if (!this.ready) throw new Error('Firebase 未初始化，請先在設定中配置');
+        if (!this.ready) throw new Error('Firebase 未初始化');
         return this._auth.createUserWithEmailAndPassword(email, pw);
       },
       async signIn(email, pw){
-        if (!this.ready) throw new Error('Firebase 未初始化，請先在設定中配置');
+        if (!this.ready) throw new Error('Firebase 未初始化');
         return this._auth.signInWithEmailAndPassword(email, pw);
       },
       async signOut(){
@@ -729,6 +859,175 @@
       if (el) {
         el.textContent = text;
         el.className = `api-status ${type}`;
+      }
+    }
+
+    // =========================
+    // 混合型報價API
+    // =========================
+    async function fetchMixedQuote(symbol, market) {
+      try {
+        if (market === 'TW') {
+          return await fetchTWSEQuote(symbol);
+        } else if (market === 'US') {
+          return await fetchFinnhubQuote(symbol);
+        }
+      } catch (e) {
+        console.warn('混合API查價失敗:', e);
+        return null;
+      }
+      return null;
+    }
+
+    async function fetchFinnhubQuote(symbol) {
+      const token = appSettings.finnhubKey;
+      if (!token) return null;
+      
+      try {
+        const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(token)}`;
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        const price = (typeof data.c==='number' && data.c>0) ? data.c : null;
+        return price ? { price, name: symbol } : null;
+      } catch (e) {
+        console.warn('Finnhub API錯誤:', e);
+        return null;
+      }
+    }
+
+    async function fetchTWSEQuote(symbol) {
+      const clean = symbol.replace(/\s+/g,'').toUpperCase();
+      const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?json=1&delay=0&ex_ch=tse_${encodeURIComponent(clean)}.tw`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        const arr = (data && data.msgArray) || [];
+        if (!arr.length) return null;
+        const it = arr[0] || {};
+        const z = parseFloat(it.z); // 成交價
+        const y = parseFloat(it.y); // 昨收
+        const price = !isNaN(z) && z>0 ? z : (!isNaN(y) ? y : NaN);
+        if (isNaN(price)) return null;
+        return { price, name: it.n || '' };
+      } catch (e) {
+        console.warn('TWSE fetch error:', e);
+        return null;
+      }
+    }
+
+    function getCurrentPrice(symbol, market) {
+      const key = `${market}-${symbol}`;
+      const useLive = (String(appSettings.useLivePrice)==='true') || appSettings.useLivePrice===true;
+      const entry = currentPrices[key];
+      const expired = !entry || !entry._ts || (Date.now() - entry._ts > 60*1000);
+      
+      if (useLive && expired) {
+        fetchMixedQuote(symbol, market).then(quote=>{
+          if (quote && typeof quote.price==='number' && quote.price>0) {
+            currentPrices[key] = { value: quote.price, name: quote.name || '', _ts: Date.now() };
+            updatePortfolio(); 
+            updateAnalysis();
+          }
+        }).catch(()=>{});
+      }
+      
+      if (entry && typeof entry.value === 'number') return entry.value;
+
+      // 沒有即時價：用最近一筆成交價微幅擾動
+      const last = transactions.filter(t=> t.symbol===symbol && t.market===market)
+                               .sort((a,b)=> new Date(b.date)-new Date(a.date))[0];
+      let value = 100;
+      if (last) {
+        const fluctuation = (Math.random()-0.5) * 0.1;
+        value = last.price * (1 + fluctuation);
+      }
+      currentPrices[key] = { value, _ts: Date.now() };
+      return value;
+    }
+
+    async function fetchLivePrice(symbol, market) {
+      return await fetchMixedQuote(symbol, market);
+    }
+
+    // 交易表單上的查價/填價功能
+    async function peekQuote() {
+      const market = document.getElementById('market').value;
+      const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+      const hint = document.getElementById('lastQuoteHint');
+      
+      if (!market || !symbol) { 
+        hint.textContent=''; 
+        return; 
+      }
+      
+      hint.textContent = '查詢中…';
+      
+      const quote = await fetchLivePrice(symbol, market);
+      
+      if (quote && typeof quote.price === 'number') {
+        lastPeekPrice = quote.price;
+        hint.textContent = `即時價：${quote.price.toFixed(2)}${quote.name ? '｜名稱：'+quote.name : ''}`;
+        
+        // 若名稱欄位為空且有回傳名稱，自動填入
+        if (quote.name && !document.getElementById('name').value.trim()) {
+          document.getElementById('name').value = quote.name;
+        }
+      } else {
+        hint.textContent = '查價失敗（可能為API限制或代號有誤）';
+      }
+    }
+    
+    async function fillCurrentPrice() {
+      if (lastPeekPrice) {
+        document.getElementById('price').value = lastPeekPrice.toFixed(2);
+        calculateFees();
+      } else {
+        await peekQuote();
+        if (lastPeekPrice) {
+          document.getElementById('price').value = lastPeekPrice.toFixed(2);
+          calculateFees();
+        }
+      }
+    }
+
+    // API連線測試
+    async function testApiConnection() {
+      const statusEl = document.getElementById('priceApiStatus');
+      
+      statusEl.textContent = 'API狀態：測試中...';
+      statusEl.className = 'api-status warning';
+      
+      try {
+        // 測試台股
+        const twResult = await fetchMixedQuote('2330', 'TW');
+        // 測試美股
+        const usResult = await fetchMixedQuote('AAPL', 'US');
+        
+        let results = [];
+        if (twResult && twResult.price) {
+          results.push(`台股正常 (台積電: ${twResult.price})`);
+        } else {
+          results.push('台股API異常');
+        }
+        
+        if (usResult && usResult.price) {
+          results.push(`美股正常 (AAPL: ${usResult.price})`);
+        } else {
+          results.push('美股API異常 (檢查Finnhub金鑰)');
+        }
+        
+        if (twResult || usResult) {
+          statusEl.textContent = `API狀態：${results.join(' | ')}`;
+          statusEl.className = 'api-status success';
+        } else {
+          statusEl.textContent = 'API狀態：無法取得報價資料';
+          statusEl.className = 'api-status error';
+        }
+      } catch (e) {
+        statusEl.textContent = `API狀態：連線失敗 (${e.message})`;
+        statusEl.className = 'api-status error';
       }
     }
 
@@ -788,7 +1087,7 @@
           accounts: accounts,
           selectedAccountId: currentAccountId,
           lastSync: new Date().toISOString(),
-          version: '2.0.0'
+          version: '2.1.0'
         };
         await FB.set(`users/${userId}`, payload);
         showNotification('資料同步成功！','success');
@@ -807,17 +1106,26 @@
           if (userData.accounts) {
             accounts = userData.accounts || {};
             currentAccountId = userData.selectedAccountId || Object.keys(accounts)[0];
-            refreshAccountSelect(); hydrateFromAccount();
+            
+            // 確保所有帳戶都有 deposits 陣列
+            Object.values(accounts).forEach(acc => {
+              if (!acc.deposits) acc.deposits = [];
+            });
+            
+            refreshAccountSelect(); 
+            hydrateFromAccount();
             showNotification('資料載入成功','success');
           } else {
             const acc = createEmptyAccount('雲端匯入','現股','TWD');
             acc.transactions   = userData.transactions || [];
             acc.exchanges      = userData.exchanges || [];
             acc.capitalRecords = userData.capitalRecords || [];
+            acc.deposits       = userData.deposits || [];
             acc.feeSettings    = userData.feeSettings || feeSettings;
             accounts = { [acc.id]: acc };
             currentAccountId = acc.id;
-            refreshAccountSelect(); hydrateFromAccount();
+            refreshAccountSelect(); 
+            hydrateFromAccount();
             showNotification('已從舊版格式載入並升級為帳戶制','success');
           }
         }
@@ -872,18 +1180,20 @@
       const btn = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
       if (btn) btn.classList.add('active');
       document.getElementById(tabName).classList.add('active');
+      
       if (tabName === 'portfolio') updatePortfolio();
       if (tabName === 'analysis') updateAnalysis();
       if (tabName === 'exchange') updateExchangeTable();
       if (tabName === 'capital') updateCapitalTable();
+      if (tabName === 'deposits') { updateDepositTable(); updateDepositStats(); }
       if (tabName === 'settings') { loadFeeSettings(); loadAppSettingsUI(); }
     }
 
     function setDefaultDates() {
       const today = new Date().toISOString().split('T')[0];
-      ['date','exchangeDate','capitalDate','sellDate'].forEach(id=>{
+      ['date','exchangeDate','capitalDate','sellDate','depositStartDate','depositEndDate'].forEach(id=>{
         const el = document.getElementById(id); 
-        if (el) el.value = today;
+        if (el && !el.value) el.value = today;
       });
     }
 
@@ -907,8 +1217,16 @@
       capitalRecords = acc.capitalRecords || [];
       deposits       = acc.deposits || [];
       feeSettings    = acc.feeSettings || feeSettings;
-      updateTransactionTable(); updateExchangeTable(); updatePortfolio(); 
-      updateCapitalTable(); updateDepositTable(); loadFeeSettings(); updateAnalysis(); updateAccountMeta();
+      
+      updateTransactionTable(); 
+      updateExchangeTable(); 
+      updatePortfolio(); 
+      updateCapitalTable(); 
+      updateDepositTable(); 
+      updateDepositStats();
+      loadFeeSettings(); 
+      updateAnalysis(); 
+      updateAccountMeta();
     }
     
     function flushWorkingSetsToAccount() {
@@ -918,21 +1236,6 @@
       accounts[currentAccountId].exchanges      = exchanges;
       accounts[currentAccountId].capitalRecords = capitalRecords;
       accounts[currentAccountId].deposits       = deposits;
-      accounts[currentAccountId].feeSettings    = feeSettings;
-    }
-      exchanges      = acc.exchanges || [];
-      capitalRecords = acc.capitalRecords || [];
-      feeSettings    = acc.feeSettings || feeSettings;
-      updateTransactionTable(); updateExchangeTable(); updatePortfolio(); 
-      updateCapitalTable(); loadFeeSettings(); updateAnalysis(); updateAccountMeta();
-    }
-    
-    function flushWorkingSetsToAccount() {
-      if (!currentAccountId) return;
-      if (!accounts[currentAccountId]) accounts[currentAccountId] = createEmptyAccount();
-      accounts[currentAccountId].transactions   = transactions;
-      accounts[currentAccountId].exchanges      = exchanges;
-      accounts[currentAccountId].capitalRecords = capitalRecords;
       accounts[currentAccountId].feeSettings    = feeSettings;
     }
     
@@ -1015,6 +1318,7 @@
           def.transactions = JSON.parse(localStorage.getItem('stockTransactions') || '[]');
           def.exchanges    = JSON.parse(localStorage.getItem('exchangeRecords')   || '[]');
           def.capitalRecords = JSON.parse(localStorage.getItem('capitalRecords') || '[]');
+          def.deposits     = JSON.parse(localStorage.getItem('depositRecords') || '[]');
           const savedSettings = localStorage.getItem('feeSettings');
           def.feeSettings = savedSettings ? JSON.parse(savedSettings) : feeSettings;
           accounts[def.id] = def; 
@@ -1022,6 +1326,12 @@
           localStorage.setItem('accounts', JSON.stringify(accounts));
           localStorage.setItem('selectedAccountId', currentAccountId);
         }
+        
+        // 確保所有帳戶都有 deposits 陣列
+        Object.values(accounts).forEach(acc => {
+          if (!acc.deposits) acc.deposits = [];
+        });
+        
       } catch (e) {
         console.error('讀取帳戶失敗，建立預設帳戶', e);
         const def = createEmptyAccount(); 
@@ -1051,234 +1361,107 @@
     }
 
     // =========================
-    // 統一報價API
+    // 定存系統
     // =========================
-    async function fetchUnifiedQuote(symbol, market) {
-      const apiKey = appSettings.alphaVantageKey;
-      if (!apiKey) return null;
+    function calculateDepositInterest() {
+      const startDate = document.getElementById('depositStartDate').value;
+      const endDate = document.getElementById('depositEndDate').value;
+      const principal = parseFloat(document.getElementById('depositPrincipal').value) || 0;
+      const rate = parseFloat(document.getElementById('depositRate').value) || 0;
+      const interestType = document.getElementById('depositInterestType').value;
       
-      try {
-        let apiSymbol = symbol;
-        if (market === 'TW') {
-          // 台股需要加上交易所後綴
-          apiSymbol = `${symbol}.TPE`;
-        }
-        
-        const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(apiSymbol)}&apikey=${encodeURIComponent(apiKey)}`;
-        const res = await fetch(url);
-        
-        if (!res.ok) return null;
-        const data = await res.json();
-        
-        if (data['Error Message'] || data['Note']) {
-          console.warn('Alpha Vantage API限制或錯誤:', data);
-          return null;
-        }
-        
-        const quote = data['Global Quote'];
-        if (!quote) return null;
-        
-        const price = parseFloat(quote['05. price']);
-        const name = quote['01. symbol'];
-        
-        return {
-          price: !isNaN(price) && price > 0 ? price : null,
-          name: name || ''
-        };
-      } catch (e) {
-        console.warn('統一API查價失敗:', e);
-        return null;
-      }
-    }
-
-    async function fetchSeparateQuote(symbol, market) {
-      try {
-        if (market === 'TW') {
-          return await fetchTWSEQuote(symbol);
-        } else if (market === 'US') {
-          const token = appSettings.finnhubKey;
-          if (!token) return null;
-          const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(token)}`;
-          const res = await fetch(url);
-          if (!res.ok) return null;
-          const data = await res.json();
-          const price = (typeof data.c==='number' && data.c>0) ? data.c : null;
-          return price ? { price, name: '' } : null;
-        }
-      } catch (e) {
-        console.warn('分離API查價失敗:', e);
-        return null;
-      }
-      return null;
-    }
-
-    async function fetchTWSEQuote(symbol) {
-      const clean = symbol.replace(/\s+/g,'').toUpperCase();
-      const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?json=1&delay=0&ex_ch=tse_${encodeURIComponent(clean)}.tw`;
-      try {
-        const res = await fetch(url);
-        if (!res.ok) return null;
-        const data = await res.json();
-        const arr = (data && data.msgArray) || [];
-        if (!arr.length) return null;
-        const it = arr[0] || {};
-        const z = parseFloat(it.z); // 成交價
-        const y = parseFloat(it.y); // 昨收
-        const price = !isNaN(z) && z>0 ? z : (!isNaN(y) ? y : NaN);
-        if (isNaN(price)) return null;
-        return { price, name: it.n || '' };
-      } catch (e) {
-        console.warn('TWSE fetch error:', e);
-        return null;
-      }
-    }
-
-    function getCurrentPrice(symbol, market) {
-      const key = `${market}-${symbol}`;
-      const useLive = (String(appSettings.useLivePrice)==='true') || appSettings.useLivePrice===true;
-      const entry = currentPrices[key];
-      const expired = !entry || !entry._ts || (Date.now() - entry._ts > 60*1000);
-      
-      if (useLive && expired) {
-        fetchLivePrice(symbol, market).then(quote=>{
-          if (quote && typeof quote.price==='number' && quote.price>0) {
-            currentPrices[key] = { value: quote.price, name: quote.name || '', _ts: Date.now() };
-            updatePortfolio(); 
-            updateAnalysis();
-          }
-        }).catch(()=>{});
+      if (!startDate || !endDate || !principal || !rate) {
+        return;
       }
       
-      if (entry && typeof entry.value === 'number') return entry.value;
-
-      // 沒有即時價：用最近一筆成交價微幅擾動
-      const last = transactions.filter(t=> t.symbol===symbol && t.market===market)
-                               .sort((a,b)=> new Date(b.date)-new Date(a.date))[0];
-      let value = 100;
-      if (last) {
-        const fluctuation = (Math.random()-0.5) * 0.1;
-        value = last.price * (1 + fluctuation);
-      }
-      currentPrices[key] = { value, _ts: Date.now() };
-      return value;
-    }
-
-    async function fetchLivePrice(symbol, market) {
-      const provider = appSettings.priceApiProvider || 'unified';
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+      const months = Math.round(daysDiff / 30.44); // 平均月份天數
+      const years = daysDiff / 365.25;
       
-      if (provider === 'unified') {
-        return await fetchUnifiedQuote(symbol, market);
+      document.getElementById('depositTerm').value = months;
+      
+      let interest = 0;
+      let maturityAmount = 0;
+      
+      if (interestType === 'simple') {
+        // 單利計算
+        interest = principal * (rate / 100) * years;
+        maturityAmount = principal + interest;
       } else {
-        return await fetchSeparateQuote(symbol, market);
+        // 複利計算（月複利）
+        const monthlyRate = rate / 100 / 12;
+        maturityAmount = principal * Math.pow(1 + monthlyRate, months);
+        interest = maturityAmount - principal;
       }
+      
+      document.getElementById('depositInterest').value = interest.toFixed(2);
+      document.getElementById('depositMaturityAmount').value = maturityAmount.toFixed(2);
     }
 
-    // 交易表單上的查價/填價功能
-    async function peekQuote() {
-      const market = document.getElementById('market').value;
-      const symbol = document.getElementById('symbol').value.trim().toUpperCase();
-      const hint = document.getElementById('lastQuoteHint');
+    function updateDepositTable() {
+      const tbody = document.getElementById('depositTable');
+      if (!tbody) return;
       
-      if (!market || !symbol) { 
-        hint.textContent=''; 
-        return; 
-      }
+      tbody.innerHTML = '';
+      const sorted = [...deposits].sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
       
-      hint.textContent = '查詢中…';
-      
-      const quote = await fetchLivePrice(symbol, market);
-      
-      if (quote && typeof quote.price === 'number') {
-        lastPeekPrice = quote.price;
-        hint.textContent = `即時價：${quote.price.toFixed(2)}${quote.name ? '｜名稱：'+quote.name : ''}`;
+      sorted.forEach(d => {
+        const tr = tbody.insertRow();
+        const today = new Date();
+        const endDate = new Date(d.endDate);
+        const status = endDate > today ? '進行中' : '已到期';
+        const statusColor = endDate > today ? '#28a745' : '#6c757d';
         
-        // 若名稱欄位為空且有回傳名稱，自動填入
-        if (quote.name && !document.getElementById('name').value.trim()) {
-          document.getElementById('name').value = quote.name;
-        }
-      } else {
-        hint.textContent = '查價失敗（可能為API限制或代號有誤）';
-      }
-    }
-    
-    async function fillCurrentPrice() {
-      if (lastPeekPrice) {
-        document.getElementById('price').value = lastPeekPrice.toFixed(2);
-        calculateFees();
-      } else {
-        await peekQuote();
-        if (lastPeekPrice) {
-          document.getElementById('price').value = lastPeekPrice.toFixed(2);
-          calculateFees();
-        }
-      }
+        tr.innerHTML = `
+          <td>${d.bank}</td>
+          <td>${d.type}</td>
+          <td>${d.currency}</td>
+          <td>${d.principal.toLocaleString()}</td>
+          <td>${d.rate.toFixed(2)}%</td>
+          <td>${d.term}個月</td>
+          <td>${d.startDate}</td>
+          <td>${d.endDate}</td>
+          <td class="profit">${d.interest.toFixed(2)}</td>
+          <td class="profit">${d.maturityAmount.toFixed(2)}</td>
+          <td style="color:${statusColor};font-weight:600;">${status}</td>
+          <td>${d.note || '-'}</td>
+          <td><button class="delete-btn" onclick="deleteDeposit(${d.id})">刪除</button></td>`;
+      });
     }
 
-    // API連線測試
-    async function testApiConnection() {
-      const provider = appSettings.priceApiProvider || 'unified';
-      const statusEl = document.getElementById('priceApiStatus');
+    function updateDepositStats() {
+      const today = new Date();
+      const activeDeposits = deposits.filter(d => new Date(d.endDate) > today);
       
-      statusEl.textContent = 'API狀態：測試中...';
-      statusEl.className = 'api-status warning';
+      const totalPrincipal = deposits.reduce((sum, d) => sum + d.principal, 0);
+      const totalInterest = deposits.reduce((sum, d) => sum + d.interest, 0);
+      const avgRate = deposits.length > 0 ? deposits.reduce((sum, d) => sum + d.rate, 0) / deposits.length : 0;
       
-      try {
-        let testResult = null;
-        
-        if (provider === 'unified') {
-          const apiKey = appSettings.alphaVantageKey;
-          if (!apiKey) {
-            statusEl.textContent = 'API狀態：請先設定Alpha Vantage API Key';
-            statusEl.className = 'api-status error';
-            return;
-          }
-          
-          // 測試美股
-          testResult = await fetchUnifiedQuote('AAPL', 'US');
-        } else {
-          // 測試分離模式
-          const twResult = await fetchSeparateQuote('2330', 'TW');
-          const usResult = await fetchSeparateQuote('AAPL', 'US');
-          testResult = twResult || usResult;
-        }
-        
-        if (testResult && testResult.price) {
-          statusEl.textContent = `API狀態：連線正常 (測試價格: ${testResult.price})`;
-          statusEl.className = 'api-status success';
-        } else {
-          statusEl.textContent = 'API狀態：無法取得報價資料';
-          statusEl.className = 'api-status error';
-        }
-      } catch (e) {
-        statusEl.textContent = `API狀態：連線失敗 (${e.message})`;
-        statusEl.className = 'api-status error';
-      }
+      document.getElementById('totalDepositPrincipal').textContent = `${totalPrincipal.toFixed(2)}`;
+      document.getElementById('totalDepositInterest').textContent = `${totalInterest.toFixed(2)}`;
+      document.getElementById('activeDepositsCount').textContent = activeDeposits.length;
+      document.getElementById('avgDepositRate').textContent = `${avgRate.toFixed(2)}%`;
+    }
+
+    function deleteDeposit(id) {
+      if (!confirm('確定要刪除此定存記錄嗎？')) return;
+      deposits = deposits.filter(d => d.id !== id);
+      saveLocalData();
+      updateDepositTable();
+      updateDepositStats();
+      updateAnalysis();
+      showNotification('定存記錄已刪除','success');
     }
 
     // =========================
     // 資本管理
     // =========================
-    document.getElementById('capitalForm').addEventListener('submit', function(e){
-      e.preventDefault();
-      const capital = {
-        id: Date.now(),
-        date: document.getElementById('capitalDate').value,
-        type: document.getElementById('capitalType').value,
-        amount: parseFloat(document.getElementById('capitalAmount').value),
-        note: document.getElementById('capitalNote').value
-      };
-      capitalRecords.push(capital);
-      saveLocalData(); 
-      updateCapitalTable(); 
-      updateCapitalStats(); 
-      updateAnalysis();
-      this.reset(); 
-      setDefaultDates();
-      showNotification('資本紀錄已新增成功！','success');
-    });
-
     function updateCapitalTable() {
       const tbody = document.getElementById('capitalTable'); 
+      if (!tbody) return;
+      
       tbody.innerHTML='';
       const sortedRecords = [...capitalRecords].sort((a,b)=> new Date(b.date)-new Date(a.date));
       let cumulativeCapital = 0;
@@ -1350,135 +1533,14 @@
       currentSellStock=null; 
       document.getElementById('sellForm').reset(); 
     }
-    
-    document.getElementById('sellForm').addEventListener('submit', function(e){
-      e.preventDefault();
-      if (!currentSellStock) return;
-      
-      const sellQuantity = parseFloat(document.getElementById('sellQuantity').value);
-      const sellPrice = parseFloat(document.getElementById('sellPrice').value);
-      const sellDate = document.getElementById('sellDate').value;
-      const sellNote = document.getElementById('sellNote').value;
-      
-      if (sellQuantity > currentSellStock.availableQuantity) { 
-        showNotification('賣出數量不能超過持有數量','error'); 
-        return; 
-      }
-
-      const sellTransaction = {
-        id: Date.now(), 
-        date: sellDate, 
-        market: currentSellStock.market, 
-        symbol: currentSellStock.symbol,
-        name: currentSellStock.name, 
-        type:'賣出', 
-        quantity:sellQuantity, 
-        price:sellPrice, 
-        isOddLot:false, 
-        fee:0, 
-        tax:0, 
-        note:sellNote
-      };
-      
-      const totalAmount = sellQuantity * sellPrice;
-      if (currentSellStock.market === 'TW') {
-        const feeRate = feeSettings.tw.feeRate / 100;
-        sellTransaction.fee = Math.max(totalAmount*feeRate, feeSettings.tw.minFee);
-        sellTransaction.tax = totalAmount * (feeSettings.tw.taxRate / 100);
-      } else if (currentSellStock.market === 'US') {
-        if (feeSettings.us.feeType === 'fixed') sellTransaction.fee = feeSettings.us.fixedFee;
-        else sellTransaction.fee = Math.max(totalAmount * (feeSettings.us.feeRate / 100), feeSettings.us.minFee);
-      }
-      sellTransaction.totalAmount = totalAmount - sellTransaction.fee - sellTransaction.tax;
-
-      transactions.push(sellTransaction);
-      saveLocalData();
-      updateTransactionTable(); 
-      updatePortfolio(); 
-      updateAnalysis();
-      closeSellModal();
-      showNotification(`成功賣出 ${sellQuantity} 股 ${currentSellStock.symbol}！`,'success');
-    });
-    
-    window.onclick = function(ev){ 
-      const m = document.getElementById('sellModal'); 
-      if (ev.target === m) closeSellModal(); 
-    };
-
-    // =========================
-    // 交易表單
-    // =========================
-    document.getElementById('transactionForm').addEventListener('submit', function(e){
-      e.preventDefault();
-      const transaction = {
-        id: Date.now(),
-        date: document.getElementById('date').value,
-        market: document.getElementById('market').value,
-        symbol: document.getElementById('symbol').value.toUpperCase().trim(),
-        name: document.getElementById('name').value.trim(),
-        type: document.getElementById('type').value,
-        quantity: parseFloat(document.getElementById('quantity').value),
-        price: parseFloat(document.getElementById('price').value),
-        isOddLot: document.getElementById('oddLot').value === 'true',
-        fee: parseFloat(document.getElementById('fee').value) || 0,
-        tax: parseFloat(document.getElementById('tax').value) || 0,
-        note: document.getElementById('note').value
-      };
-      
-      if (transaction.type === '買進') {
-        transaction.totalAmount = (transaction.quantity * transaction.price) + transaction.fee + transaction.tax;
-      } else {
-        transaction.totalAmount = (transaction.quantity * transaction.price) - transaction.fee - transaction.tax;
-      }
-
-      transactions.push(transaction);
-      saveLocalData();
-      updateTransactionTable(); 
-      updatePortfolio(); 
-      updateAnalysis();
-      this.reset(); 
-      setDefaultDates(); 
-      document.getElementById('oddLot').value='false';
-      document.getElementById('lastQuoteHint').textContent = '';
-      showNotification('交易紀錄已新增成功！','success');
-    });
-
-    // =========================
-    // 換匯表單
-    // =========================
-    document.getElementById('exchangeForm').addEventListener('submit', function(e){
-      e.preventDefault();
-      const exchange = {
-        id: Date.now(),
-        date: document.getElementById('exchangeDate').value,
-        type: document.getElementById('exchangeType').value,
-        fromAmount: parseFloat(document.getElementById('fromAmount').value),
-        rate: parseFloat(document.getElementById('exchangeRate').value),
-        toAmount: parseFloat(document.getElementById('toAmount').value),
-        fee: parseFloat(document.getElementById('exchangeFee').value) || 0,
-        bank: document.getElementById('exchangeBank').value,
-        note: document.getElementById('exchangeNote').value
-      };
-      exchanges.push(exchange);
-      saveLocalData(); 
-      updateExchangeTable(); 
-      updateAnalysis();
-      this.reset(); 
-      setDefaultDates();
-      showNotification('換匯紀錄已新增成功！','success');
-    });
-    
-    function calculateExchangeAmount() {
-      const fromAmount = parseFloat(document.getElementById('fromAmount').value) || 0;
-      const rate = parseFloat(document.getElementById('exchangeRate').value) || 0;
-      if (fromAmount && rate) document.getElementById('toAmount').value = (fromAmount*rate).toFixed(4);
-    }
 
     // =========================
     // 表格（交易/換匯）
     // =========================
     function updateTransactionTable() {
       const tbody = document.getElementById('transactionTable'); 
+      if (!tbody) return;
+      
       tbody.innerHTML='';
       const sorted = [...transactions].sort((a,b)=> new Date(b.date)-new Date(a.date));
       sorted.forEach(t=>{
@@ -1502,6 +1564,8 @@
     
     function updateExchangeTable() {
       const tbody = document.getElementById('exchangeTable'); 
+      if (!tbody) return;
+      
       tbody.innerHTML='';
       const sorted = [...exchanges].sort((a,b)=> new Date(b.date)-new Date(a.date));
       sorted.forEach(e=>{
@@ -1602,6 +1666,8 @@
       });
       
       const tbody = document.getElementById('portfolioTable'); 
+      if (!tbody) return;
+      
       tbody.innerHTML='';
       Object.values(portfolio).forEach(h=>{
         if (h.totalQuantity > 0) {
@@ -1662,6 +1728,9 @@
       const totalProfit = totalValue - totalInvestment;
       const totalReturn = totalInvestment>0 ? (totalProfit/totalInvestment)*100 : 0;
       
+      // 定存總價值計算
+      const totalDepositValue = deposits.reduce((sum, d) => sum + d.maturityAmount, 0);
+      
       document.getElementById('totalInvestment').textContent = `${totalInvestment.toFixed(2)}`;
       document.getElementById('totalValue').textContent = `${totalValue.toFixed(2)}`;
       
@@ -1674,6 +1743,7 @@
       trEl.className = totalReturn>=0 ? 'stat-value profit':'stat-value loss';
       
       document.getElementById('totalExchangeFee').textContent = `${totalExchangeFee.toFixed(2)}`;
+      document.getElementById('totalDepositValue').textContent = `${totalDepositValue.toFixed(2)}`;
 
       // 個股已實現損益
       const _r = computeRealizedPnLEvents();
@@ -1873,32 +1943,29 @@
     
     function loadAppSettingsUI() {
       const useLive = document.getElementById('useLivePrice');
-      const provider = document.getElementById('priceApiProvider');
-      const alphaKey = document.getElementById('alphaVantageKey');
       const finnhubKey = document.getElementById('finnhubKey');
       
       if (useLive) useLive.value = String(appSettings.useLivePrice ? 'true':'false');
-      if (provider) provider.value = appSettings.priceApiProvider || 'unified';
-      if (alphaKey) alphaKey.value = appSettings.alphaVantageKey || '';
       if (finnhubKey) finnhubKey.value = appSettings.finnhubKey || '';
       
       // 載入 Firebase 設定
       const firebaseConfigEl = document.getElementById('firebaseConfig');
-      if (firebaseConfigEl && firebaseConfig) {
+      if (firebaseConfigEl) {
         firebaseConfigEl.value = JSON.stringify(firebaseConfig, null, 2);
       }
     }
     
     function saveAppSettings() {
       const useLive = document.getElementById('useLivePrice');
-      const provider = document.getElementById('priceApiProvider');
-      const alphaKey = document.getElementById('alphaVantageKey');
       const finnhubKey = document.getElementById('finnhubKey');
       
       appSettings.useLivePrice = (useLive && useLive.value === 'true');
-      appSettings.priceApiProvider = (provider && provider.value) || 'unified';
-      appSettings.alphaVantageKey = (alphaKey && alphaKey.value ? alphaKey.value.trim() : '');
       appSettings.finnhubKey = (finnhubKey && finnhubKey.value ? finnhubKey.value.trim() : '');
+      
+      // 如果沒有設定，使用預設key
+      if (!appSettings.finnhubKey) {
+        appSettings.finnhubKey = 'd30rabhr01qnu2qvafv0d30rabhr01qnu2qvafvg';
+      }
       
       localStorage.setItem('appSettings', JSON.stringify(appSettings));
       currentPrices = {}; // 清快取
@@ -1914,10 +1981,7 @@
       try {
         const configText = configEl.value.trim();
         if (!configText) {
-          firebaseConfig = null;
-          localStorage.removeItem('firebaseConfig');
-          showNotification('Firebase設定已清除','success');
-          updateFirebaseStatus('Firebase: 未配置 (僅本地模式)', 'warning');
+          showNotification('請輸入Firebase設定','error');
           return;
         }
         
@@ -1942,7 +2006,14 @@
         // 重新載入設定
         const savedConfig = localStorage.getItem('firebaseConfig');
         if (savedConfig) {
-          firebaseConfig = JSON.parse(savedConfig);
+          try {
+            const customConfig = JSON.parse(savedConfig);
+            if (customConfig.apiKey && customConfig.projectId) {
+              firebaseConfig = customConfig;
+            }
+          } catch(e) {
+            console.warn('載入自定義Firebase配置失敗');
+          }
         }
         
         FB.init();
@@ -1983,6 +2054,12 @@
           csvContent += `${c.date},${c.type},${c.amount},"${c.note||''}"\n`;
         });
         filename='capital_records.csv';
+      } else if (type==='deposits') {
+        csvContent = 'Start Date,End Date,Bank,Type,Currency,Principal,Rate,Term(Months),Interest Type,Interest,Maturity Amount,Note\n';
+        deposits.forEach(d=>{
+          csvContent += `${d.startDate},${d.endDate},"${d.bank}","${d.type}",${d.currency},${d.principal},${d.rate},${d.term},"${d.interestType}",${d.interest},${d.maturityAmount},"${d.note||''}"\n`;
+        });
+        filename='deposit_records.csv';
       }
       
       downloadCSV(csvContent, filename);
@@ -2035,6 +2112,11 @@
             accounts = data.accounts;
             currentAccountId = data.selectedAccountId || Object.keys(accounts)[0];
             
+            // 確保所有帳戶都有 deposits 陣列
+            Object.values(accounts).forEach(acc => {
+              if (!acc.deposits) acc.deposits = [];
+            });
+            
             if (data.appSettings) {
               appSettings = {...appSettings, ...data.appSettings};
               localStorage.setItem('appSettings', JSON.stringify(appSettings));
@@ -2054,6 +2136,7 @@
             acc.transactions = data.transactions || [];
             acc.exchanges = data.exchanges || [];
             acc.capitalRecords = data.capitalRecords || [];
+            acc.deposits = data.deposits || [];
             acc.feeSettings = data.feeSettings || feeSettings;
             
             accounts[acc.id] = acc;
@@ -2083,6 +2166,7 @@
       transactions=[]; 
       exchanges=[]; 
       capitalRecords=[]; 
+      deposits=[];
       currentPrices={};
       accounts={}; 
       currentAccountId=null;
@@ -2099,10 +2183,183 @@
       updateExchangeTable(); 
       updatePortfolio(); 
       updateCapitalTable(); 
+      updateDepositTable();
+      updateDepositStats();
       updateAnalysis();
       
       showNotification('所有資料已清空並重新初始化！','success');
     }
+
+    // =========================
+    // 換匯計算
+    // =========================
+    function calculateExchangeAmount() {
+      const fromAmount = parseFloat(document.getElementById('fromAmount').value) || 0;
+      const rate = parseFloat(document.getElementById('exchangeRate').value) || 0;
+      if (fromAmount && rate) document.getElementById('toAmount').value = (fromAmount*rate).toFixed(4);
+    }
+
+    // =========================
+    // 表單事件處理
+    // =========================
+    
+    // 交易表單
+    document.getElementById('transactionForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const transaction = {
+        id: Date.now(),
+        date: document.getElementById('date').value,
+        market: document.getElementById('market').value,
+        symbol: document.getElementById('symbol').value.toUpperCase().trim(),
+        name: document.getElementById('name').value.trim(),
+        type: document.getElementById('type').value,
+        quantity: parseFloat(document.getElementById('quantity').value),
+        price: parseFloat(document.getElementById('price').value),
+        isOddLot: document.getElementById('oddLot').value === 'true',
+        fee: parseFloat(document.getElementById('fee').value) || 0,
+        tax: parseFloat(document.getElementById('tax').value) || 0,
+        note: document.getElementById('note').value
+      };
+      
+      if (transaction.type === '買進') {
+        transaction.totalAmount = (transaction.quantity * transaction.price) + transaction.fee + transaction.tax;
+      } else {
+        transaction.totalAmount = (transaction.quantity * transaction.price) - transaction.fee - transaction.tax;
+      }
+
+      transactions.push(transaction);
+      saveLocalData();
+      updateTransactionTable(); 
+      updatePortfolio(); 
+      updateAnalysis();
+      this.reset(); 
+      setDefaultDates(); 
+      document.getElementById('oddLot').value='false';
+      document.getElementById('lastQuoteHint').textContent = '';
+      showNotification('交易紀錄已新增成功！','success');
+    });
+
+    // 換匯表單
+    document.getElementById('exchangeForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const exchange = {
+        id: Date.now(),
+        date: document.getElementById('exchangeDate').value,
+        type: document.getElementById('exchangeType').value,
+        fromAmount: parseFloat(document.getElementById('fromAmount').value),
+        rate: parseFloat(document.getElementById('exchangeRate').value),
+        toAmount: parseFloat(document.getElementById('toAmount').value),
+        fee: parseFloat(document.getElementById('exchangeFee').value) || 0,
+        bank: document.getElementById('exchangeBank').value,
+        note: document.getElementById('exchangeNote').value
+      };
+      exchanges.push(exchange);
+      saveLocalData(); 
+      updateExchangeTable(); 
+      updateAnalysis();
+      this.reset(); 
+      setDefaultDates();
+      showNotification('換匯紀錄已新增成功！','success');
+    });
+
+    // 資本表單
+    document.getElementById('capitalForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const capital = {
+        id: Date.now(),
+        date: document.getElementById('capitalDate').value,
+        type: document.getElementById('capitalType').value,
+        amount: parseFloat(document.getElementById('capitalAmount').value),
+        note: document.getElementById('capitalNote').value
+      };
+      capitalRecords.push(capital);
+      saveLocalData(); 
+      updateCapitalTable(); 
+      updateCapitalStats(); 
+      updateAnalysis();
+      this.reset(); 
+      setDefaultDates();
+      showNotification('資本紀錄已新增成功！','success');
+    });
+
+    // 定存表單
+    document.getElementById('depositForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const deposit = {
+        id: Date.now(),
+        startDate: document.getElementById('depositStartDate').value,
+        endDate: document.getElementById('depositEndDate').value,
+        bank: document.getElementById('depositBank').value,
+        type: document.getElementById('depositType').value,
+        currency: document.getElementById('depositCurrency').value,
+        principal: parseFloat(document.getElementById('depositPrincipal').value),
+        rate: parseFloat(document.getElementById('depositRate').value),
+        term: parseInt(document.getElementById('depositTerm').value),
+        interestType: document.getElementById('depositInterestType').value,
+        interest: parseFloat(document.getElementById('depositInterest').value),
+        maturityAmount: parseFloat(document.getElementById('depositMaturityAmount').value),
+        note: document.getElementById('depositNote').value
+      };
+      
+      deposits.push(deposit);
+      saveLocalData();
+      updateDepositTable();
+      updateDepositStats();
+      updateAnalysis();
+      this.reset();
+      setDefaultDates();
+      showNotification('定存記錄已新增成功！','success');
+    });
+
+    // 快速賣出表單
+    document.getElementById('sellForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      if (!currentSellStock) return;
+      
+      const sellQuantity = parseFloat(document.getElementById('sellQuantity').value);
+      const sellPrice = parseFloat(document.getElementById('sellPrice').value);
+      const sellDate = document.getElementById('sellDate').value;
+      const sellNote = document.getElementById('sellNote').value;
+      
+      if (sellQuantity > currentSellStock.availableQuantity) { 
+        showNotification('賣出數量不能超過持有數量','error'); 
+        return; 
+      }
+
+      const sellTransaction = {
+        id: Date.now(), 
+        date: sellDate, 
+        market: currentSellStock.market, 
+        symbol: currentSellStock.symbol,
+        name: currentSellStock.name, 
+        type:'賣出', 
+        quantity:sellQuantity, 
+        price:sellPrice, 
+        isOddLot:false, 
+        fee:0, 
+        tax:0, 
+        note:sellNote
+      };
+      
+      const totalAmount = sellQuantity * sellPrice;
+      if (currentSellStock.market === 'TW') {
+        const feeRate = feeSettings.tw.feeRate / 100;
+        sellTransaction.fee = Math.max(totalAmount*feeRate, feeSettings.tw.minFee);
+        sellTransaction.tax = totalAmount * (feeSettings.tw.taxRate / 100);
+      } else if (currentSellStock.market === 'US') {
+        if (feeSettings.us.feeType === 'fixed') sellTransaction.fee = feeSettings.us.fixedFee;
+        else sellTransaction.fee = Math.max(totalAmount * (feeSettings.us.feeRate / 100), feeSettings.us.minFee);
+      }
+      sellTransaction.totalAmount = totalAmount - sellTransaction.fee - sellTransaction.tax;
+
+      transactions.push(sellTransaction);
+      saveLocalData();
+      updateTransactionTable(); 
+      updatePortfolio(); 
+      updateAnalysis();
+      closeSellModal();
+      showNotification(`成功賣出 ${sellQuantity} 股 ${currentSellStock.symbol}！`,'success');
+    });
 
     // =========================
     // 事件綁定
@@ -2149,12 +2406,29 @@
           debouncedPeekQuote();
         });
       }
+
+      // 定存利息自動計算
+      ['depositStartDate','depositEndDate','depositPrincipal','depositRate','depositInterestType'].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('change', calculateDepositInterest);
+          el.addEventListener('input', calculateDepositInterest);
+        }
+      });
     }
+
+    // Modal 點擊外部關閉
+    window.onclick = function(ev){ 
+      const m = document.getElementById('sellModal'); 
+      if (ev.target === m) closeSellModal(); 
+    };
 
     // =========================
     // 初始化
     // =========================
     window.addEventListener('load', function(){
+      console.log('開始初始化股票投資組合管理系統...');
+      
       // 初始化 Firebase
       FB.init();
       
@@ -2191,7 +2465,8 @@
       // 如果已有市場和代號，執行查價
       setTimeout(debouncedPeekQuote, 100);
       
-      console.log('股票投資組合管理系統已完成初始化');
+      console.log('✅ 股票投資組合管理系統初始化完成');
+      showNotification('系統已準備就緒','success');
     });
   </script>
 </body>
