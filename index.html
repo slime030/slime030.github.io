@@ -893,7 +893,7 @@
     function createEmptyAccount(name='預設帳戶', type='現股', baseCurrency='TWD') {
       return {
         id: _genAccId(), name, type, baseCurrency,
-        transactions: [], exchanges: [], capitalRecords: [],
+        transactions: [], exchanges: [], capitalRecords: [], deposits: [],
         feeSettings: JSON.parse(JSON.stringify(feeSettings)),
         createdAt: new Date().toISOString()
       };
@@ -903,6 +903,23 @@
       if (!currentAccountId || !accounts[currentAccountId]) return;
       const acc = accounts[currentAccountId];
       transactions   = acc.transactions || [];
+      exchanges      = acc.exchanges || [];
+      capitalRecords = acc.capitalRecords || [];
+      deposits       = acc.deposits || [];
+      feeSettings    = acc.feeSettings || feeSettings;
+      updateTransactionTable(); updateExchangeTable(); updatePortfolio(); 
+      updateCapitalTable(); updateDepositTable(); loadFeeSettings(); updateAnalysis(); updateAccountMeta();
+    }
+    
+    function flushWorkingSetsToAccount() {
+      if (!currentAccountId) return;
+      if (!accounts[currentAccountId]) accounts[currentAccountId] = createEmptyAccount();
+      accounts[currentAccountId].transactions   = transactions;
+      accounts[currentAccountId].exchanges      = exchanges;
+      accounts[currentAccountId].capitalRecords = capitalRecords;
+      accounts[currentAccountId].deposits       = deposits;
+      accounts[currentAccountId].feeSettings    = feeSettings;
+    }
       exchanges      = acc.exchanges || [];
       capitalRecords = acc.capitalRecords || [];
       feeSettings    = acc.feeSettings || feeSettings;
@@ -1023,9 +1040,11 @@
         flushWorkingSetsToAccount();
         localStorage.setItem('accounts', JSON.stringify(accounts));
         localStorage.setItem('selectedAccountId', currentAccountId);
+        // 與舊版相容（保留）
         localStorage.setItem('stockTransactions', JSON.stringify(transactions));
         localStorage.setItem('exchangeRecords', JSON.stringify(exchanges));
         localStorage.setItem('capitalRecords', JSON.stringify(capitalRecords));
+        localStorage.setItem('depositRecords', JSON.stringify(deposits));
         localStorage.setItem('feeSettings', JSON.stringify(feeSettings));
         localStorage.setItem('appSettings', JSON.stringify(appSettings));
       } catch (e){ console.error('儲存本地資料失敗:', e); }
@@ -1864,16 +1883,10 @@
       if (finnhubKey) finnhubKey.value = appSettings.finnhubKey || '';
       
       // 載入 Firebase 設定
-    const firebaseConfig = {
-      apiKey: "AIzaSyAFxgqpcgcA2LYL6OkoAmKobHTeqDFCRUY",
-      authDomain: "stock-portfolio-app-d069f.firebaseapp.com",
-      databaseURL: "https://stock-portfolio-app-d069f-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "stock-portfolio-app-d069f",
-      storageBucket: "stock-portfolio-app-d069f.firebasestorage.app",
-      messagingSenderId: "22049816403",
-      appId: "1:22049816403:web:1d1023c91e855f20daeba6",
-      measurementId: "G-2T6QWCPE2J"
-};
+      const firebaseConfigEl = document.getElementById('firebaseConfig');
+      if (firebaseConfigEl && firebaseConfig) {
+        firebaseConfigEl.value = JSON.stringify(firebaseConfig, null, 2);
+      }
     }
     
     function saveAppSettings() {
@@ -2183,4 +2196,3 @@
   </script>
 </body>
 </html>
-
